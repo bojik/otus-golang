@@ -16,7 +16,7 @@ func Unpack(str string) (string, error) {
 	if unicode.IsDigit(rune(str[0])) {
 		return "", ErrInvalidString
 	}
-	builder := strings.Builder{}
+	builder := &strings.Builder{}
 	temp := str
 	const searching = `0123456789\`
 	for {
@@ -28,36 +28,45 @@ func Unpack(str string) (string, error) {
 		if index > 1 { // собираем все символы до целевого
 			builder.WriteString(temp[:index-1])
 		}
-		lastIdx := len(temp) - 1
-		if unicode.IsDigit(rune(temp[index])) {
-			if index < lastIdx && unicode.IsDigit(rune(temp[index+1])) {
-				return "", ErrInvalidString
-			}
-			char := temp[index-1]
-			number, _ := strconv.Atoi(string(temp[index]))
-			builder.WriteString(strings.Repeat(string(char), number))
-		} else { // slash
-			if index == lastIdx { // слэш в конце, считаем ошибкой
-				return "", ErrInvalidString
-			}
-			if index > 0 { // записываем символ перед найденным
-				builder.WriteRune(rune(temp[index-1]))
-			}
-			nextChar := temp[index+1]
-			if lastIdx >= index+2 && unicode.IsDigit(rune(temp[index+2])) {
-				number, _ := strconv.Atoi(string(temp[index+2]))
-				rep := string(nextChar)
-				if nextChar == 'n' {
-					rep = `\n`
-				}
-				builder.WriteString(strings.Repeat(rep, number))
-				index += 2
-			} else {
-				builder.WriteRune(rune(nextChar))
-				index++
-			}
+		var err error
+		index, err = processString(temp, index, builder)
+		if err != nil {
+			return "", err
 		}
 		temp = temp[index+1:]
 	}
 	return builder.String(), nil
+}
+
+func processString(temp string, index int, builder *strings.Builder) (int, error) {
+	lastIdx := len(temp) - 1
+	if unicode.IsDigit(rune(temp[index])) {
+		if index < lastIdx && unicode.IsDigit(rune(temp[index+1])) {
+			return 0, ErrInvalidString
+		}
+		char := temp[index-1]
+		number, _ := strconv.Atoi(string(temp[index]))
+		builder.WriteString(strings.Repeat(string(char), number))
+	} else { // slash
+		if index == lastIdx { // слэш в конце, считаем ошибкой
+			return 0, ErrInvalidString
+		}
+		if index > 0 { // записываем символ перед найденным
+			builder.WriteRune(rune(temp[index-1]))
+		}
+		nextChar := temp[index+1]
+		if lastIdx >= index+2 && unicode.IsDigit(rune(temp[index+2])) {
+			number, _ := strconv.Atoi(string(temp[index+2]))
+			rep := string(nextChar)
+			if nextChar == 'n' {
+				rep = `\n`
+			}
+			builder.WriteString(strings.Repeat(rep, number))
+			index += 2
+		} else {
+			builder.WriteRune(rune(nextChar))
+			index++
+		}
+	}
+	return index, nil
 }
