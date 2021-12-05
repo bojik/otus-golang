@@ -40,6 +40,7 @@ func Unpack(str string) (string, error) {
 
 func processString(temp string, index int, builder *strings.Builder) (int, error) {
 	lastIdx := len(temp) - 1
+
 	if unicode.IsDigit(rune(temp[index])) {
 		if index < lastIdx && unicode.IsDigit(rune(temp[index+1])) {
 			return 0, ErrInvalidString
@@ -47,7 +48,9 @@ func processString(temp string, index int, builder *strings.Builder) (int, error
 		char := temp[index-1]
 		number, _ := strconv.Atoi(string(temp[index]))
 		builder.WriteString(strings.Repeat(string(char), number))
-	} else { // slash
+	}
+
+	if !unicode.IsDigit(rune(temp[index])) { // slash
 		if index == lastIdx { // слэш в конце, считаем ошибкой
 			return 0, ErrInvalidString
 		}
