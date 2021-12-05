@@ -60,11 +60,7 @@ func processString(temp string, index int, builder *strings.Builder) (int, error
 		nextChar := temp[index+1]
 		if lastIdx >= index+2 && unicode.IsDigit(rune(temp[index+2])) {
 			number, _ := strconv.Atoi(string(temp[index+2]))
-			rep := string(nextChar)
-			if nextChar == 'n' {
-				rep = `\n`
-			}
-			builder.WriteString(strings.Repeat(rep, number))
+			builder.WriteString(strings.Repeat(getRepString(rune(nextChar)), number))
 			index += 2
 		} else {
 			builder.WriteRune(rune(nextChar))
@@ -72,4 +68,12 @@ func processString(temp string, index int, builder *strings.Builder) (int, error
 		}
 	}
 	return index, nil
+}
+
+func getRepString(sym rune) string {
+	rep := string(sym)
+	if sym == 'n' {
+		rep = `\n`
+	}
+	return rep
 }
