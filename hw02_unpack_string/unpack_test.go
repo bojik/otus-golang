@@ -12,18 +12,20 @@ func TestUnpack(t *testing.T) {
 		input    string
 		expected string
 	}{
+		{input: "ру4с2ки2й", expected: "руууусскиий"},
 		{input: "a4bc2d5e", expected: "aaaabccddddde"},
 		{input: "a4bc2d5e2", expected: "aaaabccdddddee"},
 		{input: "abccd", expected: "abccd"},
 		{input: "", expected: ""},
 		{input: "aaa0b", expected: "aab"},
-		// uncomment if task with asterisk completed
 		{input: `qwe\4\5`, expected: `qwe45`},
 		{input: `qwe\45`, expected: `qwe44444`},
 		{input: `qwe\\5`, expected: `qwe\\\\\`},
 		{input: `qwe\\\3`, expected: `qwe\3`},
 		{input: `d\n5abc`, expected: `d\n\n\n\n\nabc`},
 		{input: `d\\\n5abc`, expected: `d\\n\n\n\n\nabc`},
+		{input: `καλημε2ρα`, expected: `καλημεερα`},
+		{input: `κα0λημε2ρα`, expected: `κλημεερα`},
 	}
 
 	for _, tc := range tests {
