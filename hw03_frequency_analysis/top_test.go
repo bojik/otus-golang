@@ -7,7 +7,7 @@ import (
 )
 
 // Change to true if needed.
-var taskWithAsteriskIsCompleted = false
+var taskWithAsteriskIsCompleted = true
 
 var text = `Как видите, он  спускается  по  лестнице  вслед  за  своим
 	другом   Кристофером   Робином,   головой   вниз,  пересчитывая
@@ -48,6 +48,14 @@ func TestTop10(t *testing.T) {
 		require.Len(t, Top10(""), 0)
 	})
 
+	t.Run("one word only", func(t *testing.T) {
+		require.Equal(t, []string{"слово"}, Top10("слово"))
+	})
+
+	t.Run("short text", func(t *testing.T) {
+		require.Equal(t, []string{"о", "слове", "слово"}, Top10("слово о слове"))
+	})
+
 	t.Run("positive test", func(t *testing.T) {
 		if taskWithAsteriskIsCompleted {
 			expected := []string{
@@ -79,4 +87,44 @@ func TestTop10(t *testing.T) {
 			require.Equal(t, expected, Top10(text))
 		}
 	})
+}
+
+func TestTrimWordLeft(t *testing.T) {
+	trimCases := []struct {
+		input    string
+		expected string
+	}{
+		{input: ",test", expected: "test"},
+		{input: ".test", expected: "test"},
+		{input: "!test", expected: "test"},
+		{input: "...test", expected: "test"},
+		{input: ",!.-test", expected: "test"},
+		{input: ",!.-", expected: ""},
+	}
+	for _, testCase := range trimCases {
+		testCase := testCase
+		t.Run("test left trim - "+testCase.input, func(t *testing.T) {
+			require.Equal(t, testCase.expected, trimWordLeft(testCase.input))
+		})
+	}
+}
+
+func TestTrimWordRight(t *testing.T) {
+	trimCases := []struct {
+		input    string
+		expected string
+	}{
+		{input: "test,", expected: "test"},
+		{input: "test.", expected: "test"},
+		{input: "test!", expected: "test"},
+		{input: "test...", expected: "test"},
+		{input: "test,!!.-", expected: "test"},
+		{input: "", expected: ""},
+	}
+	for _, testCase := range trimCases {
+		testCase := testCase
+		t.Run("test right trim - "+testCase.input, func(t *testing.T) {
+			require.Equal(t, testCase.expected, trimWordRight(testCase.input))
+		})
+	}
 }
