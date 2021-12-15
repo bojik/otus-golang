@@ -62,6 +62,18 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Equal(t, 0, c.Len())
 	})
+
+	t.Run("queue test", func(t *testing.T) {
+		c := NewCache(3)
+		c.Set("test1", 1)
+		c.Set("test2", 2)
+		c.Set("test3", 3)
+		c.Set("test4", 4)
+		_, ok := c.Get("test1")
+		require.False(t, ok)
+		c.Set("test4", 4)
+		require.Equal(t, 3, c.Len())
+	})
 }
 
 func TestCacheMultithreading(t *testing.T) {
