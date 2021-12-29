@@ -7,14 +7,20 @@ import (
 	"sync"
 )
 
-var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+var (
+	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
+	ErrMaxErrorsLessZero   = errors.New("number of error is less than zero")
+)
 
 type Task func() error
 
 var l = log.Default()
 
-// Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
+// Run starts tasks in maxWorkers goroutines and stops its work when receiving maxErrors errors from tasks.
 func Run(tasks []Task, maxWorkers, maxErrors int) error {
+	if maxErrors < 0 {
+		return ErrMaxErrorsLessZero
+	}
 	l.SetOutput(ioutil.Discard) // comment for debug
 	tch := make(chan Task)
 	ech := make(chan error)
@@ -43,7 +49,8 @@ func Run(tasks []Task, maxWorkers, maxErrors int) error {
 	return ret
 }
 
-func process(tasks []Task, mw, me int, tch chan Task, ech chan error) error {
+// main processing of goroutine logic.
+func process(tasks []Task, maxWorkers, maxErrors int, tch chan Task, ech chan error) error {
 	var (
 		i, done, errs, prc int
 		ret                error
@@ -68,12 +75,9 @@ func process(tasks []Task, mw, me int, tch chan Task, ech chan error) error {
 			l.Printf("done: %d\n", done)
 			if err != nil {
 				errs++
-				if done < me && mw+me < count {
-					count = mw + me
-				}
-				if errs == me {
-					ret = ErrErrorsLimitExceeded
-					l.Println("stopping workers by errors")
+				count, err = processError(errs, done, maxErrors, maxWorkers, count)
+				if err != nil {
+					ret = err
 				}
 			}
 		default:
@@ -86,6 +90,20 @@ func process(tasks []Task, mw, me int, tch chan Task, ech chan error) error {
 	return ret
 }
 
+// Processes error state, changes number of processing tasks if needed.
+func processError(errs int, done int, maxErrors, maxWorkers int, count int) (int, error) {
+	if maxErrors > 0 {
+		if done < maxErrors && maxWorkers+maxErrors < count {
+			count = maxWorkers + maxErrors
+		}
+		if errs == maxErrors {
+			return count, ErrErrorsLimitExceeded
+		}
+	}
+	return count, nil
+}
+
+// Starts task to execute, waiting stop signal from stop channel.
 func worker(num int, wg *sync.WaitGroup, tasks <-chan Task, errs chan<- error, stop <-chan bool) {
 	l.Printf("#%d: starting\n", num)
 	for {
@@ -93,14 +111,11 @@ func worker(num int, wg *sync.WaitGroup, tasks <-chan Task, errs chan<- error, s
 		case t := <-tasks:
 			l.Printf("#%d: starting task\n", num)
 			err := t()
-			l.Printf("#%d: task done\n", num)
 			l.Printf("#%d: writing in error channel\n", num)
 			errs <- err
-			l.Printf("#%d: done writing in error channel\n", num)
 		case <-stop:
 			l.Printf("#%d: receiving stop signal\n", num)
 			wg.Done()
-			l.Printf("#%d: stop worker\n", num)
 			return
 		}
 	}

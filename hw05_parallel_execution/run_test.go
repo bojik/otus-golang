@@ -25,17 +25,29 @@ var (
 )
 
 func TestSimple(t *testing.T) {
-	var tasks = []Task{task, errTask, task}
-	err := Run(tasks, 2, 2)
-	require.Nil(t, err)
-	err = Run(tasks, 10, 2)
-	require.Nil(t, err)
+	t.Run("simple test", func(t *testing.T) {
+		tasks := []Task{task, errTask, task}
+		err := Run(tasks, 2, 2)
+		require.Nil(t, err)
+	})
+	t.Run("workers > tasks", func(t *testing.T) {
+		tasks := []Task{task, errTask, task}
+		err := Run(tasks, 10, 2)
+		require.Nil(t, err)
+	})
 }
 
 func TestError(t *testing.T) {
-	var tasks = []Task{task, errTask, task, errTask, task}
-	err := Run(tasks, 2, 2)
-	require.ErrorIs(t, err, ErrErrorsLimitExceeded)
+	t.Run("error limit exceeded expected", func(t *testing.T) {
+		tasks := []Task{task, errTask, task, errTask, task}
+		err := Run(tasks, 2, 2)
+		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
+	})
+	t.Run("error maxErrors less zero expected", func(t *testing.T) {
+		tasks := []Task{task, errTask, task, errTask, task}
+		err := Run(tasks, 2, -2)
+		require.ErrorIs(t, err, ErrMaxErrorsLessZero)
+	})
 }
 
 func TestRun(t *testing.T) {
@@ -62,6 +74,27 @@ func TestRun(t *testing.T) {
 
 		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
 		require.LessOrEqual(t, runTasksCount, int32(workersCount+maxErrorsCount), "extra tasks were started")
+	})
+
+	t.Run("if maxErrors equals zero, no errors expected", func(t *testing.T) {
+		tasksCount := 50
+		tasks := make([]Task, 0, tasksCount)
+
+		var runTasksCount int32
+
+		for i := 0; i < tasksCount; i++ {
+			err := fmt.Errorf("error from task %d", i)
+			tasks = append(tasks, func() error {
+				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				atomic.AddInt32(&runTasksCount, 1)
+				return err
+			})
+		}
+
+		workersCount := 10
+		maxErrorsCount := 0
+		err := Run(tasks, workersCount, maxErrorsCount)
+		require.Nil(t, err)
 	})
 
 	t.Run("tasks without errors", func(t *testing.T) {
