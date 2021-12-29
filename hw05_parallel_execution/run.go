@@ -10,6 +10,7 @@ import (
 var (
 	ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 	ErrMaxErrorsLessZero   = errors.New("number of error is less than zero")
+	ErrMaxWorkersLessOne   = errors.New("number of workers is less one")
 )
 
 type Task func() error
@@ -20,6 +21,9 @@ var l = log.Default()
 func Run(tasks []Task, maxWorkers, maxErrors int) error {
 	if maxErrors < 0 {
 		return ErrMaxErrorsLessZero
+	}
+	if maxWorkers < 1 {
+		return ErrMaxWorkersLessOne
 	}
 	l.SetOutput(ioutil.Discard) // comment for debug
 	tch := make(chan Task)

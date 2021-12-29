@@ -38,15 +38,20 @@ func TestSimple(t *testing.T) {
 }
 
 func TestError(t *testing.T) {
-	t.Run("error limit exceeded expected", func(t *testing.T) {
+	t.Run("error of limit exceeded is expected", func(t *testing.T) {
 		tasks := []Task{task, errTask, task, errTask, task}
 		err := Run(tasks, 2, 2)
 		require.ErrorIs(t, err, ErrErrorsLimitExceeded)
 	})
-	t.Run("error maxErrors less zero expected", func(t *testing.T) {
+	t.Run("error of maxErrors less zero is expected", func(t *testing.T) {
 		tasks := []Task{task, errTask, task, errTask, task}
 		err := Run(tasks, 2, -2)
 		require.ErrorIs(t, err, ErrMaxErrorsLessZero)
+	})
+	t.Run("error of maxWorkers less one is expected", func(t *testing.T) {
+		tasks := []Task{task, errTask, task, errTask, task}
+		err := Run(tasks, 0, 100)
+		require.ErrorIs(t, err, ErrMaxWorkersLessOne)
 	})
 }
 
