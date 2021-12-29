@@ -12,6 +12,32 @@ import (
 	"go.uber.org/goleak"
 )
 
+var (
+	task Task = func() error {
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+		return nil
+	}
+
+	errTask Task = func() error {
+		time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+		return errors.New("Hzhz")
+	}
+)
+
+func TestSimple(t *testing.T) {
+	var tasks = []Task{task, errTask, task}
+	err := Run(tasks, 2, 2)
+	require.Nil(t, err)
+	err = Run(tasks, 10, 2)
+	require.Nil(t, err)
+}
+
+func TestError(t *testing.T) {
+	var tasks = []Task{task, errTask, task, errTask, task}
+	err := Run(tasks, 2, 2)
+	require.ErrorIs(t, err, ErrErrorsLimitExceeded)
+}
+
 func TestRun(t *testing.T) {
 	defer goleak.VerifyNone(t)
 
