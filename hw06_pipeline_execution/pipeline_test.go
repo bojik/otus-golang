@@ -1,12 +1,12 @@
 package hw06pipelineexecution
 
 import (
+	"go.uber.org/goleak"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.uber.org/goleak"
 )
 
 const (
@@ -88,13 +88,6 @@ func TestPipeline(t *testing.T) {
 		done := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
 
-		// Abort after 200ms
-		abortDur := sleepPerStage * 2
-		go func() {
-			<-time.After(abortDur)
-			close(done)
-		}()
-
 		go func() {
 			defer close(in)
 			for _, v := range data {
@@ -104,6 +97,13 @@ func TestPipeline(t *testing.T) {
 					return
 				}
 			}
+		}()
+
+		// Abort after 200ms
+		abortDur := sleepPerStage * 2
+		go func() {
+			<-time.After(abortDur)
+			close(done)
 		}()
 
 		result := make([]string, 0, 10)

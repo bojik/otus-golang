@@ -1,6 +1,6 @@
 package hw06pipelineexecution
 
-import "sync"
+import "fmt"
 
 type (
 	In  = <-chan interface{}
@@ -12,31 +12,31 @@ type Stage func(in In) (out Out)
 
 // ExecutePipeline creates pipeline from stages.
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
+	stageCh := in
 	for _, stage := range stages {
-		in = runStage(done, in, stage)
+		stageCh = runStage(done, stageCh, stage)
 	}
-	return in
+	return stageCh
 }
 
 // runStage starts stage execution asynchronously.
 // It returns channel to connect next stage.
 func runStage(done In, in In, stage Stage) Out {
-	stageCh := make(Bi)
-	var wg sync.WaitGroup
-	wg.Add(1)
+	outCh := make(Bi)
 	go func() {
-		defer wg.Done()
-		for v := range in {
+		defer func() {
+			close(outCh)
+			for range outCh {
+			}
+		}()
+		for v := range stage(in) {
 			select {
-			case stageCh <- v:
+			case outCh <- v:
 			case <-done:
+				fmt.Println("Done!")
 				return
 			}
 		}
 	}()
-	go func() {
-		wg.Wait()
-		close(stageCh)
-	}()
-	return stage(stageCh)
+	return outCh
 }
