@@ -39,5 +39,5 @@ func TestRunCmd(t *testing.T) {
 
 func TestErrorRunCmd(t *testing.T) {
 	code := RunCmd([]string{"ls", "hzhz"}, make(Environment))
-	require.Equal(t, 1, code)
+	require.NotEqual(t, 0, code)
 }
