@@ -19,11 +19,10 @@ func TestReadDir(t *testing.T) {
 	require.False(t, ok)
 	exp := Environment{
 		"BAR":   EnvValue{Value: "bar", NeedRemove: false},
-		"EMPTY": EnvValue{Value: " ", NeedRemove: false},
-		"FOO":   EnvValue{Value: "   foo\nwith", NeedRemove: false},
+		"EMPTY": EnvValue{Value: "", NeedRemove: false},
+		"FOO":   EnvValue{Value: "   foo\nwith new line", NeedRemove: false},
 		"HELLO": EnvValue{Value: "\"hello\"", NeedRemove: false},
 		"UNSET": EnvValue{Value: "", NeedRemove: true},
-		//		"UNSET1": EnvValue{Value: "", NeedRemove: true},
 	}
 	require.Equal(t, len(exp), len(res))
 	for k, v := range exp {
@@ -61,6 +60,7 @@ func TestClearText(t *testing.T) {
 		{"\t  super test\t \n", "\t  super test\t \n"},
 		{"\t  super test\n\t  ", "\t  super test\n"},
 		{"\t  super test\n\x00\t  ", "\t  super test\n\n"},
+		{" ", ""},
 	}
 	for _, tc := range cases {
 		tc := tc
@@ -73,5 +73,5 @@ func TestClearText(t *testing.T) {
 func TestReadFirstLine(t *testing.T) {
 	fl, err := readFirstLine("./testdata/env/FOO")
 	require.Nil(t, err)
-	require.Equal(t, "   foo\nwith", clearString(fl))
+	require.Equal(t, "   foo\nwith new line", clearString(fl))
 }

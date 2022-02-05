@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 )
 
@@ -77,8 +76,8 @@ func readFirstLine(fileName string) (string, error) {
 		return "", err
 	}
 	defer fp.Close()
-	con, err := io.ReadAll(fp)
-	if err != nil {
+	con, err1 := io.ReadAll(fp)
+	if err1 != nil {
 		return "", err
 	}
 	return strings.Split(string(con), "\n")[0], nil
@@ -87,7 +86,6 @@ func readFirstLine(fileName string) (string, error) {
 // clearString prepares string from usage.
 func clearString(s string) string {
 	ret := strings.ReplaceAll(s, "\x00", "\n")
-	re := regexp.MustCompile("[\t ].+$")
-	ret = string(re.ReplaceAll([]byte(ret), []byte{}))
+	ret = strings.TrimRight(ret, "\t ")
 	return ret
 }
