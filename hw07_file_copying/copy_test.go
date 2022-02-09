@@ -13,7 +13,7 @@ import (
 )
 
 func TestCopy(t *testing.T) {
-	goleak.VerifyNone(t)
+	defer goleak.VerifyNone(t)
 	cases := []struct {
 		from     string
 		to       string
