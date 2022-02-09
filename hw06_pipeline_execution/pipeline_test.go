@@ -36,6 +36,26 @@ func TestPipeline(t *testing.T) {
 		g("Stringifier", func(v interface{}) interface{} { return strconv.Itoa(v.(int)) }),
 	}
 
+	t.Run("test stage runner", func(t *testing.T) {
+		in := make(Bi)
+		done := make(Bi)
+		data := []int{1, 2, 3, 4, 5}
+
+		go func() {
+			for _, v := range data {
+				in <- v
+			}
+			close(in)
+		}()
+
+		out := runStage(done, in, g("Multiplier (* 2)", func(v interface{}) interface{} { return v.(int) * 2 }))
+		var arr []int
+		for v := range out {
+			arr = append(arr, v.(int))
+		}
+		require.Equal(t, []int{2, 4, 6, 8, 10}, arr)
+	})
+
 	t.Run("simple case", func(t *testing.T) {
 		in := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
@@ -66,18 +86,18 @@ func TestPipeline(t *testing.T) {
 		done := make(Bi)
 		data := []int{1, 2, 3, 4, 5}
 
+		go func() {
+			defer close(in)
+			for _, v := range data {
+				in <- v
+			}
+		}()
+
 		// Abort after 200ms
 		abortDur := sleepPerStage * 2
 		go func() {
 			<-time.After(abortDur)
 			close(done)
-		}()
-
-		go func() {
-			for _, v := range data {
-				in <- v
-			}
-			close(in)
 		}()
 
 		result := make([]string, 0, 10)
