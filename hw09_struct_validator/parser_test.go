@@ -1,8 +1,9 @@
 package hw09structvalidator
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseTag(t *testing.T) {

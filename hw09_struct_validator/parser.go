@@ -1,6 +1,8 @@
 package hw09structvalidator
 
-import "strings"
+import (
+	"strings"
+)
 
 type TagData struct {
 	Name        string
@@ -15,11 +17,11 @@ func ParseTag(tag string) []TagData {
 		return nil
 	}
 	validators := strings.Split(tag, "|")
-	var data []TagData
+	data := []TagData{}
 	for _, validator := range validators {
 		parts := strings.SplitN(validator, ":", 2)
 		var args []string
-		if len(parts) > 1 {
+		if len(parts) > 1 && parts[1] != "" {
 			args = strings.Split(parts[1], ",")
 		}
 		data = append(data, TagData{Name: parts[0], Args: args, OriginalTag: validator})
