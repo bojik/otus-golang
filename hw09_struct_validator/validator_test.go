@@ -3,6 +3,7 @@ package hw09structvalidator
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -57,4 +58,13 @@ func TestValidate(t *testing.T) {
 			_ = tt
 		})
 	}
+}
+
+func TestError(t *testing.T) {
+	t.Run("invalid type", func(t *testing.T) {
+		err := Validate("123")
+		require.ErrorIs(t, ErrInvalidType, err)
+	})
+	u := User{}
+	Validate(u)
 }
