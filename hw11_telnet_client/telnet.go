@@ -30,9 +30,9 @@ type client struct {
 	timeout    time.Duration
 	in         io.ReadCloser
 	out        io.Writer
-	conn       net.Conn
 	connected  bool
-	context    context.Context
+	conn       net.Conn
+	ctx        context.Context
 	cancelFunc context.CancelFunc
 }
 
@@ -47,7 +47,7 @@ func (c *client) ConnectContext(ctx context.Context) error {
 	}
 	c.conn = conn
 	c.connected = true
-	c.context, c.cancelFunc = context.WithCancel(ctx)
+	c.ctx, c.cancelFunc = context.WithCancel(ctx)
 	return nil
 }
 
@@ -79,12 +79,12 @@ func (c *client) Receive() error {
 	return nil
 }
 
-func (c *client) copy(writer io.Writer, reader io.Reader) {
+func (c *client) copy(writer io.Writer, reader io.ReadCloser) {
 	scanner := bufio.NewScanner(reader)
 OUT:
 	for {
 		select {
-		case <-c.context.Done():
+		case <-c.ctx.Done():
 			break OUT
 		default:
 			if !scanner.Scan() {

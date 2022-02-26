@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"io/ioutil"
 	"net"
 	"os"
@@ -23,8 +22,8 @@ func TestTelnetClient(t *testing.T) {
 
 		go func() {
 			defer wg.Done()
-			in := &bytes.Buffer{}
-			out := &bytes.Buffer{}
+			in := &Buffer{}
+			out := &Buffer{}
 
 			timeout, err := time.ParseDuration("10s")
 			require.NoError(t, err)
@@ -39,7 +38,7 @@ func TestTelnetClient(t *testing.T) {
 
 			err = client.Receive()
 			require.NoError(t, err)
-			time.Sleep(5 * time.Millisecond) // спим, иначе рутина завершается раньше, чем успеваем получить данные
+			time.Sleep(5 * time.Second) // спим, иначе рутина завершается раньше, чем успеваем получить данные
 			require.Equal(t, "world\n", out.String())
 		}()
 
