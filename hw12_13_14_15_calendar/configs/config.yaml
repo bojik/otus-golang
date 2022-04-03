@@ -1,0 +1,8 @@
+logger:
+    file: "./var/log/calendar.log"
+    level: INFO
+db:
+    dsn: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+    migrations: "file://./migrations"
+    max_idle_connects: 10
+    max_open_connects: 10

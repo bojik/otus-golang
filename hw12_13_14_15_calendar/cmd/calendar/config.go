@@ -1,20 +1,73 @@
 package main
 
-// При желании конфигурацию можно вынести в internal/config.
-// Организация конфига в main принуждает нас сужать API компонентов, использовать
-// при их конструировании только необходимые параметры, а также уменьшает вероятность циклической зависимости.
+import (
+	"gopkg.in/yaml.v3"
+
+	"github.com/spf13/viper"
+)
+
+const (
+	ENV_PROD = "PROD"
+	ENV_DEV  = "DEV"
+)
+
 type Config struct {
-	Logger LoggerConf
-	// TODO
+	Env    string     `mapstructure:"env"`
+	Logger LoggerConf `mapstructure:"logger"`
+	Db     DbConf     `mapstructure:"db"`
 }
 
 type LoggerConf struct {
-	Level string
-	// TODO
+	Level string `mapstructure:"level"`
+	File  string `mapstructure:"file"`
 }
 
-func NewConfig() Config {
-	return Config{}
+type DbConf struct {
+	Dsn             string `mapstructure:"dsn"`
+	Migrations      string `mapstructure:"migrations"`
+	MaxIdleConnects int    `mapstructure:"max_idle_connects"`
+	MaxOpenConnects int    `mapstructure:"max_open_connects"`
 }
 
-// TODO
+func NewConfig() *Config {
+	cfg := new(Config)
+	return cfg
+}
+
+func (c *Config) isProduction() bool {
+	return c.Env == ENV_PROD
+}
+
+func (c *Config) initDefaults() error {
+	viper.SetDefault("env", ENV_PROD)
+	viper.SetDefault("logger.level", "DEBUG")
+	viper.SetDefault("logger.file", "")
+	viper.SetDefault("db.dsn", "")
+	viper.SetDefault("db.migrations", "")
+	viper.SetDefault("db.max_idle_connects", "10")
+	viper.SetDefault("db.max_open_connects", "10")
+	if err := viper.Unmarshal(&c); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Config) load(file string) error {
+	viper.SetConfigFile(file)
+	if err := viper.ReadInConfig(); err != nil { // Handle errors reading the config file
+		return err
+	}
+	if err := viper.Unmarshal(&c); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Config) dump() (string, error) {
+	s := viper.AllSettings()
+	b, err := yaml.Marshal(s)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}

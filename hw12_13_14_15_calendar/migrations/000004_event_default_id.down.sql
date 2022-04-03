@@ -1,0 +1,1 @@
+alter table event alter column id drop default;

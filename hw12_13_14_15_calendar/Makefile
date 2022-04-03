@@ -20,7 +20,10 @@ run-img: build-img
 	docker run $(DOCKER_IMG)
 
 version: build
-	$(BIN) version
+	$(BIN) --version
+
+dump-config: build
+	$(BIN) --dump-config
 
 test:
 	go test -race ./internal/... ./pkg/...
