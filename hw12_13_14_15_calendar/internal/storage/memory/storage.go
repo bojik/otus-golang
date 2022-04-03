@@ -22,22 +22,22 @@ func New() *Storage {
 }
 
 func (s *Storage) InsertEvent(evt *storage.Event) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if evt.ID != "" {
 		return fmt.Errorf("%w: id = %s", ErrEventAlreadyInserted, evt.ID)
 	}
 	evt.ID = uuid.New().String()
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.events[evt.ID] = evt
 	return nil
 }
 
 func (s *Storage) UpdateEvent(evt *storage.Event) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if _, ok := s.events[evt.ID]; !ok {
 		return fmt.Errorf("%w: id = %s", ErrEventNotFound, evt.ID)
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	s.events[evt.ID] = evt
 	return nil
 }
@@ -53,12 +53,12 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 }
 
 func (s *Storage) DeleteEvent(evt *storage.Event) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	_, ok := s.events[evt.ID]
 	if !ok {
 		return fmt.Errorf("%w: id = %s", ErrEventNotFound, evt.ID)
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	delete(s.events, evt.ID)
 	return nil
 }
