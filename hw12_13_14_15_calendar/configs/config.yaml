@@ -6,3 +6,6 @@ db:
     migrations: "file://./migrations"
     max_idle_connects: 10
     max_open_connects: 10
+http_server:
+    host: '0.0.0.0'
+    port: '8085'

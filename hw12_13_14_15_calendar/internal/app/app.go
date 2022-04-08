@@ -2,25 +2,68 @@ package app
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/logger"
+	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage"
 )
 
-type App struct { // TODO
+type App struct {
+	logg    logger.Logger
+	storage storage.DataKeeper
 }
 
-type Logger interface { // TODO
+func New(logg logger.Logger, storage storage.DataKeeper) *App {
+	return &App{
+		logg:    logg,
+		storage: storage,
+	}
 }
 
-type Storage interface { // TODO
-}
-
-func New(logger Logger, storage Storage) *App {
-	return &App{}
-}
-
-func (a *App) CreateEvent(ctx context.Context, id, title string) error {
-	// TODO
+func (a *App) CreateEvent(ctx context.Context, event *storage.Event) error {
+	events, err := a.storage.SelectInterval(event.StartedAt, event.FinishedAt)
+	if err != nil {
+		return err
+	}
+	if len(events) > 0 {
+		return fmt.Errorf("%v: existed id = %s", ErrDateBusy, events[0].ID)
+	}
+	resCh := make(chan error)
+	defer close(resCh)
+	go func() {
+		resCh <- a.storage.InsertEvent(event)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-resCh:
+		if err != nil {
+			return err
+		}
+	}
 	return nil
-	// return a.storage.CreateEvent(storage.Event{ID: id, Title: title})
 }
 
-// TODO
+func (a *App) UpdateEvent(ctx context.Context, event *storage.Event) error {
+	events, err := a.storage.SelectInterval(event.StartedAt, event.FinishedAt)
+	if err != nil {
+		return err
+	}
+	if len(events) > 0 {
+		return fmt.Errorf("%v: existed id = %s", ErrDateBusy, events[0].ID)
+	}
+	resCh := make(chan error)
+	defer close(resCh)
+	go func() {
+		resCh <- a.storage.UpdateEvent(event)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-resCh:
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}

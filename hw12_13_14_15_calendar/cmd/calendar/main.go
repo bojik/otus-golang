@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -58,8 +59,58 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer lf.Close()
+	defer func() {
+		_ = lf.Close()
+	}()
 
+	var (
+		db       *sqlstorage.Storage
+		calendar *app.App
+	)
+	if config.Db.Type == DbTypePostgresql {
+		db = createDbStorage(config, migrateDown, fixAndForceMigration, logg)
+		if db == nil {
+			return
+		}
+		calendar = app.New(logg, db)
+	} else {
+		storage := memorystorage.New()
+		calendar = app.New(logg, storage)
+	}
+
+	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(config.HttpServer.Host, config.HttpServer.Port))
+
+	ctx, cancel := signal.NotifyContext(context.Background(),
+		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	defer cancel()
+
+	go func() {
+		<-ctx.Done()
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+		defer cancel()
+
+		if config.Db.Type == DbTypePostgresql {
+			if err := db.Close(ctx); err != nil {
+				logg.Error("failed to close db connects: " + err.Error())
+			}
+		}
+
+		if err := server.Stop(ctx); err != nil {
+			logg.Error("failed to stop http server: " + err.Error())
+		}
+	}()
+
+	logg.Info("calendar is running...")
+
+	if err := server.Start(ctx); err != nil {
+		logg.Error("failed to start http server: " + err.Error())
+		cancel()
+		os.Exit(1) //nolint:gocritic
+	}
+}
+
+func createDbStorage(config *Config, migrateDown *int, fixAndForceMigration *int, logg logger.Logger) *sqlstorage.Storage {
 	db := sqlstorage.New(config.Db.Dsn, config.Db.MaxIdleConnects, config.Db.MaxOpenConnects)
 
 	if *migrateDown > 0 {
@@ -69,7 +120,7 @@ func main() {
 			panic(err)
 		}
 		logg.Info("migration down: done")
-		return
+		return nil
 	}
 
 	if *fixAndForceMigration > 0 {
@@ -79,7 +130,7 @@ func main() {
 			panic(err)
 		}
 		logg.Info("fix and force migration: done")
-		return
+		return nil
 	}
 
 	logg.Info("executing migrations")
@@ -96,36 +147,5 @@ func main() {
 		logg.Error("failed to connect to db: " + err.Error())
 		panic(err)
 	}
-
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
-
-	server := internalhttp.NewServer(logg, calendar)
-
-	ctx, cancel := signal.NotifyContext(context.Background(),
-		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
-	defer cancel()
-
-	go func() {
-		<-ctx.Done()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
-		if err := db.Close(ctx); err != nil {
-			logg.Error("failed to close db connects: " + err.Error())
-		}
-
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
-		}
-	}()
-
-	logg.Info("calendar is running...")
-
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
-	}
+	return db
 }

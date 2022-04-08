@@ -7,14 +7,15 @@ import (
 )
 
 const (
-	ENV_PROD = "PROD"
-	ENV_DEV  = "DEV"
+	DbTypeMemory     = "memory"
+	DbTypePostgresql = "postgresql"
 )
 
 type Config struct {
-	Env    string     `mapstructure:"env"`
-	Logger LoggerConf `mapstructure:"logger"`
-	Db     DbConf     `mapstructure:"db"`
+	Env        string     `mapstructure:"env"`
+	Logger     LoggerConf `mapstructure:"logger"`
+	Db         DbConf     `mapstructure:"db"`
+	HttpServer HttpServer `mapstructure:"http_server"`
 }
 
 type LoggerConf struct {
@@ -23,10 +24,16 @@ type LoggerConf struct {
 }
 
 type DbConf struct {
+	Type            string `mapstructure:"type"`
 	Dsn             string `mapstructure:"dsn"`
 	Migrations      string `mapstructure:"migrations"`
 	MaxIdleConnects int    `mapstructure:"max_idle_connects"`
 	MaxOpenConnects int    `mapstructure:"max_open_connects"`
+}
+
+type HttpServer struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
 }
 
 func NewConfig() *Config {
@@ -34,18 +41,16 @@ func NewConfig() *Config {
 	return cfg
 }
 
-func (c *Config) isProduction() bool {
-	return c.Env == ENV_PROD
-}
-
 func (c *Config) initDefaults() error {
-	viper.SetDefault("env", ENV_PROD)
 	viper.SetDefault("logger.level", "DEBUG")
 	viper.SetDefault("logger.file", "")
+	viper.SetDefault("db.type", DbTypeMemory)
 	viper.SetDefault("db.dsn", "")
 	viper.SetDefault("db.migrations", "")
 	viper.SetDefault("db.max_idle_connects", "10")
 	viper.SetDefault("db.max_open_connects", "10")
+	viper.SetDefault("http_server.host", "0.0.0.0")
+	viper.SetDefault("http_server.port", "8080")
 	if err := viper.Unmarshal(&c); err != nil {
 		return err
 	}
