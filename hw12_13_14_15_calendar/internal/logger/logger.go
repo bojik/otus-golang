@@ -106,8 +106,8 @@ func (l *logg) Error(msg string, params ...Parameter) {
 
 func (l *logg) fillOptions(options []Option) {
 	for _, option := range options {
-		switch opt := option.(type) {
-		case *OptionMinLevel:
+		opt, ok := option.(*OptionMinLevel)
+		if ok {
 			l.minLevel = opt.getOption().(Level)
 		}
 	}

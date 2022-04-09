@@ -2,16 +2,19 @@ package logger
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
+const TestDataLogFile = "./testdata/app.log"
+
 func TestLogger(t *testing.T) {
-	f := "./testdata/app.log"
+	f := TestDataLogFile
 	logger := New(
 		&OptionMinLevel{INFO},
 	)
@@ -64,7 +67,7 @@ func TestLogger(t *testing.T) {
 }
 
 func TestLoggerMultiThreads(t *testing.T) {
-	f := "./testdata/app.log"
+	f := TestDataLogFile
 	logger := New(
 		&OptionMinLevel{INFO},
 	)
@@ -92,7 +95,7 @@ func TestLoggerMultiThreads(t *testing.T) {
 }
 
 func TestLoggerMessage(t *testing.T) {
-	f := "./testdata/app.log"
+	f := TestDataLogFile
 	logger := New(
 		&OptionMinLevel{DEBUG},
 	)

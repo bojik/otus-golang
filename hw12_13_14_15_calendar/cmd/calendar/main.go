@@ -37,7 +37,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//fmt.Printf("%#v", config)
 	if *dumpConfig {
 		str, err := config.dump()
 		if err != nil {
