@@ -14,7 +14,7 @@ import (
 	internalhttp "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage/sql"
-	"github.com/golang-migrate/migrate/v4"
+	migrate "github.com/golang-migrate/migrate/v4"
 	flag "github.com/spf13/pflag"
 	"golang.org/x/xerrors"
 )
