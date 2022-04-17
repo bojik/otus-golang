@@ -62,11 +62,11 @@ func TestEventCreate(t *testing.T) {
 			dataKeeper.EXPECT().InsertEvent(&tc.e).Return("123-123", nil)
 			dataKeeper.EXPECT().FindById("123-123").Return(&tc.e, nil)
 			params := url.Values{
-				"title":           {tc.e.Title},
-				"user_id":         {fmt.Sprintf("%d", tc.e.UserId)},
-				"started_at":      {tc.e.StartedAt.Format(time.RFC3339)},
-				"finished_at":     {tc.e.FinishedAt.Format(time.RFC3339)},
-				"notify_interval": {"1h"},
+				"title":           []string{tc.e.Title},
+				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserId)},
+				"started_at":      []string{tc.e.StartedAt.Format(time.RFC3339)},
+				"finished_at":     []string{tc.e.FinishedAt.Format(time.RFC3339)},
+				"notify_interval": []string{"1h"},
 			}
 			req := httptest.NewRequest("GET", "/events/create/?"+params.Encode(), nil)
 			resp := httptest.NewRecorder()
@@ -111,12 +111,12 @@ func TestEventUpdate(t *testing.T) {
 			dataKeeper.EXPECT().SelectInterval(tc.e.StartedAt, tc.e.FinishedAt).Return(nil, nil)
 			dataKeeper.EXPECT().UpdateEvent(&tc.e).Return(&tc.e, nil)
 			params := url.Values{
-				"id":              {tc.e.ID},
-				"title":           {tc.e.Title},
-				"user_id":         {fmt.Sprintf("%d", tc.e.UserId)},
-				"started_at":      {tc.e.StartedAt.Format(time.RFC3339)},
-				"finished_at":     {tc.e.FinishedAt.Format(time.RFC3339)},
-				"notify_interval": {"1h"},
+				"id":              []string{tc.e.ID},
+				"title":           []string{tc.e.Title},
+				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserId)},
+				"started_at":      []string{tc.e.StartedAt.Format(time.RFC3339)},
+				"finished_at":     []string{tc.e.FinishedAt.Format(time.RFC3339)},
+				"notify_interval": []string{"1h"},
 			}
 			req := httptest.NewRequest("GET", "/events/edit/?"+params.Encode(), nil)
 			resp := httptest.NewRecorder()
@@ -160,7 +160,7 @@ func TestEventDelete(t *testing.T) {
 			dataKeeper.EXPECT().FindById(tc.e.ID).Return(&tc.e, nil)
 			dataKeeper.EXPECT().DeleteEventById(tc.e.ID).Return(nil)
 			params := url.Values{
-				"id": {tc.e.ID},
+				"id": []string{tc.e.ID},
 			}
 			req := httptest.NewRequest("GET", "/events/delete/?"+params.Encode(), nil)
 			resp := httptest.NewRecorder()
@@ -217,8 +217,8 @@ func TestFindEvents(t *testing.T) {
 			logg.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
 			dataKeeper.EXPECT().SelectInterval(tc.f, tc.t).Return(tc.e, nil)
 			params := url.Values{
-				"from_date": {tc.f.Format(time.RFC3339)},
-				"to_date":   {tc.t.Format(time.RFC3339)},
+				"from_date": []string{tc.f.Format(time.RFC3339)},
+				"to_date":   []string{tc.t.Format(time.RFC3339)},
 			}
 			req := httptest.NewRequest("GET", "/events/list/?"+params.Encode(), nil)
 			resp := httptest.NewRecorder()
