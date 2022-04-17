@@ -40,7 +40,7 @@ func newFromStorageEventCollection(events []*storage.Event) []*Event {
 	return appEvents
 }
 
-func (e Event) convertToStorageEvent() *storage.Event {
+func (e Event) ConvertToStorageEvent() *storage.Event {
 	return &storage.Event{
 		ID:             e.Id,
 		Title:          e.Title,

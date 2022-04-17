@@ -39,7 +39,7 @@ func (a *App) CreateEvent(ctx context.Context, event Event) (string, error) {
 	resCh := make(chan result)
 	defer close(resCh)
 	go func() {
-		id, err := a.storage.InsertEvent(event.convertToStorageEvent())
+		id, err := a.storage.InsertEvent(event.ConvertToStorageEvent())
 		if err != nil {
 			resCh <- result{id: "", err: err}
 			return
@@ -72,7 +72,7 @@ func (a *App) UpdateEvent(ctx context.Context, event Event) error {
 	resCh := make(chan error)
 	defer close(resCh)
 	go func() {
-		_, err := a.storage.UpdateEvent(event.convertToStorageEvent())
+		_, err := a.storage.UpdateEvent(event.ConvertToStorageEvent())
 		resCh <- err
 	}()
 	select {
