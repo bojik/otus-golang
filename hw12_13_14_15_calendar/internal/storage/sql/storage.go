@@ -105,7 +105,7 @@ func (s *Storage) FixAndForce(migrationSource string, version int) error {
 	return nil
 }
 
-func (s *Storage) InsertEvent(evt *storage.Event) error {
+func (s *Storage) InsertEvent(evt *storage.Event) (string, error) {
 	id := uuid.New().String()
 	_, err := s.db.NamedExec(
 		SqlInsertEvent,
@@ -120,13 +120,13 @@ func (s *Storage) InsertEvent(evt *storage.Event) error {
 		},
 	)
 	if err != nil {
-		return err
+		return "", err
 	}
 	evt.ID = id
-	return nil
+	return id, nil
 }
 
-func (s *Storage) UpdateEvent(evt *storage.Event) error {
+func (s *Storage) UpdateEvent(evt *storage.Event) (*storage.Event, error) {
 	_, err := s.db.NamedExec(
 		SqlUpdateEvent,
 		map[string]interface{}{
@@ -140,9 +140,9 @@ func (s *Storage) UpdateEvent(evt *storage.Event) error {
 		},
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return evt, nil
 }
 
 func (s *Storage) FindById(id string) (*storage.Event, error) {
@@ -170,9 +170,16 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 	return evt, nil
 }
 
-func (s *Storage) DeleteEvent(evt *storage.Event) error {
-	_, err := s.db.NamedExec(SqlDeleteById, map[string]interface{}{"id": evt.ID})
+func (s *Storage) DeleteEventById(id string) error {
+	_, err := s.db.NamedExec(SqlDeleteById, map[string]interface{}{"id": id})
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) DeleteEvent(evt *storage.Event) error {
+	if err := s.DeleteEventById(evt.ID); err != nil {
 		return err
 	}
 	return nil

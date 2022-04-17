@@ -16,6 +16,7 @@ type Config struct {
 	Logger     LoggerConf `mapstructure:"logger"`
 	Db         DbConf     `mapstructure:"db"`
 	HttpServer HttpServer `mapstructure:"http_server"`
+	ApiServer  ApiServer  `mapstructure:"api_server"`
 }
 
 type LoggerConf struct {
@@ -36,6 +37,11 @@ type HttpServer struct {
 	Port string `mapstructure:"port"`
 }
 
+type ApiServer struct {
+	Host string `mapstructure:"host"`
+	Port string `mapstructure:"port"`
+}
+
 func NewConfig() *Config {
 	cfg := new(Config)
 	return cfg
@@ -51,6 +57,8 @@ func (c *Config) initDefaults() error {
 	viper.SetDefault("db.max_open_connects", "10")
 	viper.SetDefault("http_server.host", "0.0.0.0")
 	viper.SetDefault("http_server.port", "8080")
+	viper.SetDefault("api_server.host", "0.0.0.0")
+	viper.SetDefault("api_server.port", "8081")
 	if err := viper.Unmarshal(&c); err != nil {
 		return err
 	}

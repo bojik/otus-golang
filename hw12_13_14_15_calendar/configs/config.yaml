@@ -1,7 +1,8 @@
 logger:
     file: "./var/log/calendar.log"
-    level: INFO
+    level: DEBUG
 db:
+    type: memory
     dsn: "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
     migrations: "file://./migrations"
     max_idle_connects: 10
@@ -9,3 +10,6 @@ db:
 http_server:
     host: '0.0.0.0'
     port: '8085'
+api_server:
+    host: '0.0.0.0'
+    port: '8086'

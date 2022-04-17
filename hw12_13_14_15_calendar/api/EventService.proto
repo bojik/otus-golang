@@ -1,7 +1,48 @@
 syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
 
 package event;
+option go_package = "./;calendarpb";
+
+service Calendar {
+  rpc InsertEvent(Event) returns (Event) {
+  }
+  rpc UpdateEvent(Event) returns (Event) {
+  }
+  rpc FindEventById(Id) returns (Event) {
+  }
+  rpc DeleteEvent(Id) returns (Event) {
+  }
+  rpc FindEventsByInterval(Interval) returns(Events) {
+  }
+  rpc FindDayEvents(google.protobuf.Timestamp) returns(Events) {
+  }
+  rpc FindWeekEvents(google.protobuf.Timestamp) returns(Events) {
+  }
+  rpc FindMonthEvents(google.protobuf.Timestamp) returns(Events) {
+  }
+}
 
 message Event {
-    // TODO
+  string id = 1;
+  string title = 2;
+  google.protobuf.Timestamp started_at = 3;
+  google.protobuf.Timestamp finished_at = 4;
+  string description = 5;
+  int32 user_id = 6;
+  google.protobuf.Duration notify_interval = 7;
+}
+
+message Id {
+  string id = 1;
+}
+
+message Interval {
+  google.protobuf.Timestamp started_at = 1;
+  google.protobuf.Timestamp finished_at = 2;
+}
+
+message Events {
+  repeated Event events = 1;
 }

@@ -21,25 +21,27 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) InsertEvent(evt *storage.Event) error {
+func (s *Storage) InsertEvent(evt *storage.Event) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if evt.ID != "" {
-		return fmt.Errorf("%w: id = %s", ErrEventAlreadyInserted, evt.ID)
+	if evt.ID == "" {
+		evt.ID = uuid.New().String()
 	}
-	evt.ID = uuid.New().String()
+	if _, ok := s.events[evt.ID]; ok {
+		return "", fmt.Errorf("%w: id = %s", ErrEventAlreadyInserted, evt.ID)
+	}
 	s.events[evt.ID] = evt
-	return nil
+	return evt.ID, nil
 }
 
-func (s *Storage) UpdateEvent(evt *storage.Event) error {
+func (s *Storage) UpdateEvent(evt *storage.Event) (*storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if _, ok := s.events[evt.ID]; !ok {
-		return fmt.Errorf("%w: id = %s", ErrEventNotFound, evt.ID)
+		return nil, fmt.Errorf("%w: id = %s", ErrEventNotFound, evt.ID)
 	}
 	s.events[evt.ID] = evt
-	return nil
+	return evt, nil
 }
 
 func (s *Storage) FindById(id string) (*storage.Event, error) {
@@ -47,19 +49,26 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 	defer s.mu.RUnlock()
 	ret, ok := s.events[id]
 	if !ok {
-		return nil, fmt.Errorf("%w: id = %s", ErrEventNotFound, id)
+		return nil, fmt.Errorf("%w: tut id = %s", ErrEventNotFound, id)
 	}
 	return ret, nil
 }
 
-func (s *Storage) DeleteEvent(evt *storage.Event) error {
+func (s *Storage) DeleteEventById(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, ok := s.events[evt.ID]
+	_, ok := s.events[id]
 	if !ok {
-		return fmt.Errorf("%w: id = %s", ErrEventNotFound, evt.ID)
+		return fmt.Errorf("%w: id = %s", ErrEventNotFound, id)
 	}
-	delete(s.events, evt.ID)
+	delete(s.events, id)
+	return nil
+}
+
+func (s *Storage) DeleteEvent(evt *storage.Event) error {
+	if err := s.DeleteEventById(evt.ID); err != nil {
+		return err
+	}
 	return nil
 }
 

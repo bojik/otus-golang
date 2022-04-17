@@ -69,8 +69,9 @@ func (s *StorageTestSuite) TestCRUD() {
 	}
 	// Insert
 	{
-		err := s.storage.InsertEvent(e)
+		id, err := s.storage.InsertEvent(e)
 		require.Nil(s.T(), err)
+		require.NotEmpty(s.T(), id)
 		require.NotEqual(s.T(), "", e.ID)
 	}
 	// Select
@@ -87,10 +88,11 @@ func (s *StorageTestSuite) TestCRUD() {
 		require.True(s.T(), e2.StartedAt.Equal(e.StartedAt))
 		require.Equal(s.T(), e.NotifyInterval, e2.NotifyInterval)
 		e2.Title = "Title2"
-		err = s.storage.UpdateEvent(e2)
+		e4, err := s.storage.UpdateEvent(e2)
 		require.Nil(s.T(), err)
 		e3, err := s.storage.FindById(e.ID)
 		require.Equal(s.T(), e2.Title, e3.Title)
+		require.Equal(s.T(), e2.Title, e4.Title)
 	}
 	// Delete
 	{
@@ -111,7 +113,7 @@ func (s *StorageTestSuite) TestSelectInterval() {
 	}
 	for _, date := range dates {
 		e := &storage.Event{StartedAt: date}
-		err := s.storage.InsertEvent(e)
+		_, err := s.storage.InsertEvent(e)
 		require.Nil(s.T(), err)
 	}
 	ets, err := s.storage.SelectInterval(dates[1], dates[3])
@@ -135,7 +137,7 @@ func (s *StorageTestSuite) TestSelectDay() {
 	}
 	for _, date := range dates {
 		e := &storage.Event{StartedAt: date}
-		err := s.storage.InsertEvent(e)
+		_, err := s.storage.InsertEvent(e)
 		require.Nil(s.T(), err)
 	}
 	ets, err := s.storage.SelectDay(dates[2])
@@ -160,7 +162,7 @@ func (s *StorageTestSuite) TestSelectWeek() {
 	}
 	for _, date := range dates {
 		e := &storage.Event{StartedAt: date}
-		err := s.storage.InsertEvent(e)
+		_, err := s.storage.InsertEvent(e)
 		require.Nil(s.T(), err)
 	}
 	ets, err := s.storage.SelectWeek(dates[3])
@@ -186,7 +188,7 @@ func (s *StorageTestSuite) TestSelectMonth() {
 	}
 	for _, date := range dates {
 		e := &storage.Event{StartedAt: date}
-		err := s.storage.InsertEvent(e)
+		_, err := s.storage.InsertEvent(e)
 		require.Nil(s.T(), err)
 	}
 	ets, err := s.storage.SelectMonth(dates[3])

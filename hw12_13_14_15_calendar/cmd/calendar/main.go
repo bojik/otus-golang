@@ -9,8 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/api"
 	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/app"
 	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/logger"
+	internalapi "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/server/api"
 	internalhttp "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/server/http"
 	memorystorage "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage/sql"
@@ -78,6 +80,11 @@ func main() {
 	}
 
 	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(config.HttpServer.Host, config.HttpServer.Port))
+	apiSever := internalapi.NewServer(
+		net.JoinHostPort(config.ApiServer.Host, config.ApiServer.Port),
+		api.NewCalendarApi(calendar, logg),
+		logg,
+	)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -98,10 +105,18 @@ func main() {
 		if err := server.Stop(ctx); err != nil {
 			logg.Error("failed to stop http server: " + err.Error())
 		}
+		if err := apiSever.Stop(ctx); err != nil {
+			logg.Error("failed to stop api server: " + err.Error())
+		}
 	}()
 
 	logg.Info("calendar is running...")
 
+	go func() {
+		if err := apiSever.Start(ctx); err != nil {
+			logg.Error("failed to start api server: " + err.Error())
+		}
+	}()
 	if err := server.Start(ctx); err != nil {
 		logg.Error("failed to start http server: " + err.Error())
 		cancel()

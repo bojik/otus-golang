@@ -25,7 +25,8 @@ func TestStorage(t *testing.T) {
 					defer wg.Done()
 					e := generateEvent()
 					e.Title = fmt.Sprintf("%s #%d", e.Title, i)
-					err := stor.InsertEvent(e)
+					id, err := stor.InsertEvent(e)
+					require.NotEmpty(t, id)
 					require.Nil(t, err)
 					mu.Lock()
 					defer mu.Unlock()
@@ -46,7 +47,7 @@ func TestStorage(t *testing.T) {
 					defer wg.Done()
 					e := generateEvent()
 					e.ID = ids[i]
-					err := stor.UpdateEvent(e)
+					_, err := stor.UpdateEvent(e)
 					require.Nil(t, err)
 				}()
 			}
@@ -90,7 +91,7 @@ func TestStorage_SelectInterval(t *testing.T) {
 	for _, date := range dates {
 		e := generateEvent()
 		e.StartedAt = date
-		err := store.InsertEvent(e)
+		_, err := store.InsertEvent(e)
 		require.Nil(t, err)
 	}
 	ets, err := store.SelectInterval(dates[1], dates[3])
@@ -114,7 +115,7 @@ func TestStorage_SelectDay(t *testing.T) {
 	for _, date := range dates {
 		e := generateEvent()
 		e.StartedAt = date
-		err := store.InsertEvent(e)
+		_, err := store.InsertEvent(e)
 		require.Nil(t, err)
 	}
 	ets, err := store.SelectDay(dates[2])
@@ -139,7 +140,7 @@ func TestStorage_SelectWeek(t *testing.T) {
 	for _, date := range dates {
 		e := generateEvent()
 		e.StartedAt = date
-		err := store.InsertEvent(e)
+		_, err := store.InsertEvent(e)
 		require.Nil(t, err)
 	}
 	ets, err := store.SelectWeek(dates[3])
@@ -165,7 +166,7 @@ func TestStorage_SelectMonth(t *testing.T) {
 	for _, date := range dates {
 		e := generateEvent()
 		e.StartedAt = date
-		err := store.InsertEvent(e)
+		_, err := store.InsertEvent(e)
 		require.Nil(t, err)
 	}
 	ets, err := store.SelectMonth(dates[3])
@@ -180,12 +181,14 @@ func TestStorage_SelectMonth(t *testing.T) {
 func TestError(t *testing.T) {
 	stor := New()
 	e := generateEvent()
-	err := stor.InsertEvent(e)
+	id, err := stor.InsertEvent(e)
 	require.Nil(t, err)
-	err = stor.InsertEvent(e)
+	require.NotEmpty(t, id)
+	id, err = stor.InsertEvent(e)
+	require.Empty(t, id)
 	require.ErrorIs(t, err, ErrEventAlreadyInserted)
 	e = generateEvent()
-	err = stor.UpdateEvent(e)
+	_, err = stor.UpdateEvent(e)
 	require.ErrorIs(t, err, ErrEventNotFound)
 	_, err = stor.FindById("not_found")
 	require.ErrorIs(t, err, ErrEventNotFound)
