@@ -11,7 +11,7 @@ import (
 type TelnetClient interface {
 	Connect() error
 	ConnectContext(context.Context) error
-	io.Closer
+	Close() error
 	Send() error
 	Receive() error
 }
