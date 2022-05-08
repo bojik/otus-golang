@@ -1,21 +1,98 @@
 package main
 
 import (
+	"context"
 	"io"
+	"net"
 	"time"
 )
 
 type TelnetClient interface {
 	Connect() error
-	io.Closer
+	ConnectContext(context.Context) error
+	Close() error
 	Send() error
 	Receive() error
 }
 
 func NewTelnetClient(address string, timeout time.Duration, in io.ReadCloser, out io.Writer) TelnetClient {
-	// Place your code here.
+	return &client{
+		address: address,
+		timeout: timeout,
+		in:      in,
+		out:     out,
+	}
+}
+
+type client struct {
+	address    string
+	timeout    time.Duration
+	in         io.ReadCloser
+	out        io.Writer
+	connected  bool
+	conn       net.Conn
+	ctx        context.Context
+	cancelFunc context.CancelFunc
+}
+
+func (c *client) Connect() error {
+	return c.ConnectContext(context.Background())
+}
+
+func (c *client) ConnectContext(ctx context.Context) error {
+	conn, err := net.DialTimeout("tcp", c.address, c.timeout)
+	if err != nil {
+		return c.newError(err)
+	}
+	c.conn = conn
+	c.connected = true
+	c.ctx, c.cancelFunc = context.WithCancel(ctx)
 	return nil
 }
 
-// Place your code here.
-// P.S. Author's solution takes no more than 50 lines.
+func (c *client) Close() error {
+	if !c.connected {
+		return nil
+	}
+	c.cancelFunc()
+	c.connected = false
+	if err := c.conn.Close(); err != nil {
+		return c.newError(err)
+	}
+	return nil
+}
+
+func (c *client) Send() error {
+	if !c.connected {
+		return c.newError(ErrIsNotConnected)
+	}
+	go c.copy(c.conn, c.in)
+	return nil
+}
+
+func (c *client) Receive() error {
+	if !c.connected {
+		return c.newError(ErrIsNotConnected)
+	}
+	go c.copy(c.out, c.conn)
+	return nil
+}
+
+func (c *client) copy(writer io.Writer, reader io.ReadCloser) {
+OUT:
+	for {
+		select {
+		case <-c.ctx.Done():
+			break OUT
+		default:
+			_, _ = io.Copy(writer, reader)
+		}
+	}
+	c.cancelFunc()
+}
+
+func (c *client) newError(err error) error {
+	return newTelnetError(c.address, err)
+}
+
+var _ TelnetClient = (*client)(nil)
