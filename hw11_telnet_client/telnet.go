@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"io"
 	"net"
@@ -67,7 +66,9 @@ func (c *client) Send() error {
 	if !c.connected {
 		return c.newError(ErrIsNotConnected)
 	}
-	go c.copy(c.conn, c.in)
+	if _, err := io.Copy(c.conn, c.in); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -75,29 +76,10 @@ func (c *client) Receive() error {
 	if !c.connected {
 		return c.newError(ErrIsNotConnected)
 	}
-	go c.copy(c.out, c.conn)
-	return nil
-}
-
-func (c *client) copy(writer io.Writer, reader io.ReadCloser) {
-	scanner := bufio.NewScanner(reader)
-OUT:
-	for {
-		select {
-		case <-c.ctx.Done():
-			break OUT
-		default:
-			if !scanner.Scan() {
-				break OUT
-			}
-			bytes := append(scanner.Bytes(), '\n')
-			_, err := writer.Write(bytes)
-			if err != nil {
-				break OUT
-			}
-		}
+	if _, err := io.Copy(c.out, c.conn); err != nil {
+		return err
 	}
-	c.cancelFunc()
+	return nil
 }
 
 func (c *client) newError(err error) error {

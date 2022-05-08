@@ -38,7 +38,7 @@ func TestTelnetClient(t *testing.T) {
 
 			err = client.Receive()
 			require.NoError(t, err)
-			time.Sleep(5 * time.Second) // спим, иначе рутина завершается раньше, чем успеваем получить данные
+			time.Sleep(1 * time.Second) // спим, иначе рутина завершается раньше, чем успеваем получить данные
 			require.Equal(t, "world\n", out.String())
 		}()
 
