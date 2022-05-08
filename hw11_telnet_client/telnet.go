@@ -66,9 +66,7 @@ func (c *client) Send() error {
 	if !c.connected {
 		return c.newError(ErrIsNotConnected)
 	}
-	if _, err := io.Copy(c.conn, c.in); err != nil {
-		return err
-	}
+	go c.copy(c.conn, c.in)
 	return nil
 }
 
@@ -76,10 +74,21 @@ func (c *client) Receive() error {
 	if !c.connected {
 		return c.newError(ErrIsNotConnected)
 	}
-	if _, err := io.Copy(c.out, c.conn); err != nil {
-		return err
-	}
+	go c.copy(c.out, c.conn)
 	return nil
+}
+
+func (c *client) copy(writer io.Writer, reader io.ReadCloser) {
+OUT:
+	for {
+		select {
+		case <-c.ctx.Done():
+			break OUT
+		default:
+			_, _ = io.Copy(writer, reader)
+		}
+	}
+	c.cancelFunc()
 }
 
 func (c *client) newError(err error) error {
