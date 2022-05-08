@@ -20,7 +20,10 @@ run-img: build-img
 	docker run $(DOCKER_IMG)
 
 version: build
-	$(BIN) version
+	$(BIN) --version
+
+dump-config: build
+	$(BIN) --dump-config
 
 test:
 	go test -race ./internal/... ./pkg/...
@@ -30,5 +33,8 @@ install-lint-deps:
 
 lint: install-lint-deps
 	golangci-lint run ./...
+
+generate:
+	go generate ./...
 
 .PHONY: build run build-img run-img version test lint
