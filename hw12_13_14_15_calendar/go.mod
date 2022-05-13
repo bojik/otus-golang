@@ -3,7 +3,7 @@ module github.com/bojik/otus-golang/hw12_13_14_15_calendar
 go 1.16
 
 require (
-	github.com/cenkalti/backoff/v4 v4.0.2
+	github.com/cenkalti/backoff/v4 v4.1.3
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/golang/mock v1.6.0
