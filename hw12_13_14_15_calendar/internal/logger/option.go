@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -26,5 +25,5 @@ func NewOptionMinLevel(lvl string) (*OptionMinLevel, error) {
 			return &OptionMinLevel{minLevel: l}, nil
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("Unknown log Level: %s", lvl))
+	return nil, fmt.Errorf("unknown log Level: %s", lvl)
 }

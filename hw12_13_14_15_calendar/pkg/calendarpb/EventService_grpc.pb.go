@@ -61,7 +61,7 @@ func (c *calendarClient) UpdateEvent(ctx context.Context, in *Event, opts ...grp
 
 func (c *calendarClient) FindEventById(ctx context.Context, in *Id, opts ...grpc.CallOption) (*Event, error) {
 	out := new(Event)
-	err := c.cc.Invoke(ctx, "/event.Calendar/FindEventById", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/event.Calendar/FindEventByID", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (c *calendarClient) FindMonthEvents(ctx context.Context, in *timestamppb.Ti
 type CalendarServer interface {
 	InsertEvent(context.Context, *Event) (*Event, error)
 	UpdateEvent(context.Context, *Event) (*Event, error)
-	FindEventById(context.Context, *Id) (*Event, error)
+	FindEventByID(context.Context, *Id) (*Event, error)
 	DeleteEvent(context.Context, *Id) (*Event, error)
 	FindEventsByInterval(context.Context, *Interval) (*Events, error)
 	FindDayEvents(context.Context, *timestamppb.Timestamp) (*Events, error)
@@ -138,8 +138,8 @@ func (UnimplementedCalendarServer) InsertEvent(context.Context, *Event) (*Event,
 func (UnimplementedCalendarServer) UpdateEvent(context.Context, *Event) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateEvent not implemented")
 }
-func (UnimplementedCalendarServer) FindEventById(context.Context, *Id) (*Event, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FindEventById not implemented")
+func (UnimplementedCalendarServer) FindEventByID(context.Context, *Id) (*Event, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FindEventByID not implemented")
 }
 func (UnimplementedCalendarServer) DeleteEvent(context.Context, *Id) (*Event, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteEvent not implemented")
@@ -211,14 +211,14 @@ func _Calendar_FindEventById_Handler(srv interface{}, ctx context.Context, dec f
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CalendarServer).FindEventById(ctx, in)
+		return srv.(CalendarServer).FindEventByID(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/event.Calendar/FindEventById",
+		FullMethod: "/event.Calendar/FindEventByID",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CalendarServer).FindEventById(ctx, req.(*Id))
+		return srv.(CalendarServer).FindEventByID(ctx, req.(*Id))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -329,7 +329,7 @@ var Calendar_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Calendar_UpdateEvent_Handler,
 		},
 		{
-			MethodName: "FindEventById",
+			MethodName: "FindEventByID",
 			Handler:    _Calendar_FindEventById_Handler,
 		},
 		{

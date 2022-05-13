@@ -14,7 +14,7 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type JsonResponse struct {
+type JSONResponse struct {
 	Success bool
 	Error   string
 	Data    map[string]interface{}
@@ -25,7 +25,7 @@ const (
 	EventFieldStartedAt      = "started_at"
 	EventFieldFinishedAt     = "finished_at"
 	EventFieldDescription    = "description"
-	EventFieldUserId         = "user_id"
+	EventFieldUserID         = "user_id"
 	EventFieldNotifyInterval = "notify_interval"
 )
 
@@ -67,7 +67,7 @@ func (c *CreateEventHandler) ServeHTTP(writer http.ResponseWriter, request *http
 		writeError(err, writer)
 		return
 	}
-	event, err := c.a.FindById(request.Context(), id)
+	event, err := c.a.FindByID(request.Context(), id)
 	if err != nil {
 		writeError(err, writer)
 		return
@@ -101,7 +101,7 @@ func (c *UpdateEventHandler) ServeHTTP(writer http.ResponseWriter, request *http
 		writeError(fmt.Errorf("%w: %s", ErrFieldIsNotDefined, "id"), writer)
 		return
 	}
-	event, err := c.a.FindById(request.Context(), ids[0])
+	event, err := c.a.FindByID(request.Context(), ids[0])
 	if err != nil {
 		writeError(err, writer)
 		return
@@ -143,7 +143,7 @@ func (c GetEventHandler) ServeHTTP(writer http.ResponseWriter, request *http.Req
 		writeError(fmt.Errorf("%w: %s", ErrFieldIsNotDefined, "id"), writer)
 		return
 	}
-	event, err := c.a.FindById(request.Context(), ids[0])
+	event, err := c.a.FindByID(request.Context(), ids[0])
 	if err != nil {
 		writeError(err, writer)
 		return
@@ -177,7 +177,7 @@ func (c DeleteEventHandler) ServeHTTP(writer http.ResponseWriter, request *http.
 		writeError(fmt.Errorf("%w: %s", ErrFieldIsNotDefined, "id"), writer)
 		return
 	}
-	event, err := c.a.DeleteById(request.Context(), ids[0])
+	event, err := c.a.DeleteByID(request.Context(), ids[0])
 	if err != nil {
 		writeError(err, writer)
 		return
@@ -240,7 +240,7 @@ type FindEventsDayHandler struct {
 }
 
 func (c FindEventsDayHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	serveDateHttp(writer, request, c.a.FindDayEvents)
+	serveDateHTTP(writer, request, c.a.FindDayEvents)
 }
 
 var _ http.Handler = (*FindEventsDayHandler)(nil)
@@ -259,7 +259,7 @@ type FindEventsWeekHandler struct {
 }
 
 func (c FindEventsWeekHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	serveDateHttp(writer, request, c.a.FindWeekEvents)
+	serveDateHTTP(writer, request, c.a.FindWeekEvents)
 }
 
 var _ http.Handler = (*FindEventsWeekHandler)(nil)
@@ -278,7 +278,7 @@ type FindEventsMonthHandler struct {
 }
 
 func (c FindEventsMonthHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	serveDateHttp(writer, request, c.a.FindMonthEvents)
+	serveDateHTTP(writer, request, c.a.FindMonthEvents)
 }
 
 var _ http.Handler = (*FindEventsMonthHandler)(nil)
@@ -292,7 +292,7 @@ func NewFindEventsMonthHandler(a *app.App, l logger.Logger) *FindEventsMonthHand
 
 type findFuncType func(context.Context, time.Time) ([]*app.Event, error)
 
-func serveDateHttp(writer http.ResponseWriter, request *http.Request, findFunc findFuncType) {
+func serveDateHTTP(writer http.ResponseWriter, request *http.Request, findFunc findFuncType) {
 	data, err := parseRequest(request)
 	if err != nil {
 		writeError(err, writer)
@@ -312,17 +312,17 @@ func serveDateHttp(writer http.ResponseWriter, request *http.Request, findFunc f
 }
 
 func writeError(err error, writer http.ResponseWriter) {
-	resp := JsonResponse{
+	resp := JSONResponse{
 		Success: false,
 		Error:   err.Error(),
 	}
-	bytes, err := json.Marshal(resp)
+	bytes, _ := json.Marshal(resp)
 	writer.Header().Set("content-type", "application-json")
-	_, err = writer.Write(bytes)
+	writer.Write(bytes)
 }
 
 func writeSuccess(writer http.ResponseWriter, data map[string]interface{}) {
-	resp := JsonResponse{
+	resp := JSONResponse{
 		Success: true,
 		Data:    data,
 	}
@@ -345,11 +345,11 @@ func fillNewEventFromRequest(r *http.Request) (*app.Event, error) {
 		e.Title = strs[0]
 	}
 	{
-		userId, err := parseInt(data, EventFieldUserId)
+		userID, err := parseInt(data, EventFieldUserID)
 		if err != nil {
 			return nil, err
 		}
-		e.UserId = userId
+		e.UserID = userID
 	}
 	{
 		t, err := parseTime(data, EventFieldStartedAt)
@@ -419,12 +419,12 @@ func fillEventForEditFromRequest(r *http.Request, e *app.Event) error {
 		}
 	}
 	{
-		userId, err := parseInt(data, EventFieldUserId)
+		userID, err := parseInt(data, EventFieldUserID)
 		if err != nil && !xerrors.Is(err, ErrFieldIsNotDefined) {
 			return err
 		}
 		if !xerrors.Is(err, ErrFieldIsNotDefined) {
-			e.UserId = userId
+			e.UserID = userID
 		}
 	}
 	{

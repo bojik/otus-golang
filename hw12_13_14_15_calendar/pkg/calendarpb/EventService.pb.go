@@ -152,7 +152,7 @@ func (x *Id) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Id.ProtoReflect.Descriptor instead.
+// Deprecated: Use ID.ProtoReflect.Descriptor instead.
 func (*Id) Descriptor() ([]byte, []int) {
 	return file_EventService_proto_rawDescGZIP(), []int{1}
 }
@@ -352,7 +352,7 @@ func file_EventService_proto_rawDescGZIP() []byte {
 var file_EventService_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_EventService_proto_goTypes = []interface{}{
 	(*Event)(nil),                 // 0: event.Event
-	(*Id)(nil),                    // 1: event.Id
+	(*Id)(nil),                    // 1: event.ID
 	(*Interval)(nil),              // 2: event.Interval
 	(*Events)(nil),                // 3: event.Events
 	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
@@ -367,15 +367,15 @@ var file_EventService_proto_depIdxs = []int32{
 	0,  // 5: event.Events.events:type_name -> event.Event
 	0,  // 6: event.Calendar.InsertEvent:input_type -> event.Event
 	0,  // 7: event.Calendar.UpdateEvent:input_type -> event.Event
-	1,  // 8: event.Calendar.FindEventById:input_type -> event.Id
-	1,  // 9: event.Calendar.DeleteEvent:input_type -> event.Id
+	1,  // 8: event.Calendar.FindEventByID:input_type -> event.ID
+	1,  // 9: event.Calendar.DeleteEvent:input_type -> event.ID
 	2,  // 10: event.Calendar.FindEventsByInterval:input_type -> event.Interval
 	4,  // 11: event.Calendar.FindDayEvents:input_type -> google.protobuf.Timestamp
 	4,  // 12: event.Calendar.FindWeekEvents:input_type -> google.protobuf.Timestamp
 	4,  // 13: event.Calendar.FindMonthEvents:input_type -> google.protobuf.Timestamp
 	0,  // 14: event.Calendar.InsertEvent:output_type -> event.Event
 	0,  // 15: event.Calendar.UpdateEvent:output_type -> event.Event
-	0,  // 16: event.Calendar.FindEventById:output_type -> event.Event
+	0,  // 16: event.Calendar.FindEventByID:output_type -> event.Event
 	0,  // 17: event.Calendar.DeleteEvent:output_type -> event.Event
 	3,  // 18: event.Calendar.FindEventsByInterval:output_type -> event.Events
 	3,  // 19: event.Calendar.FindDayEvents:output_type -> event.Events

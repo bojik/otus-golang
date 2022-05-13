@@ -50,9 +50,9 @@ func (mr *MockDataKeeperMockRecorder) DeleteEvent(arg0 interface{}) *gomock.Call
 }
 
 // DeleteEventById mocks base method.
-func (m *MockDataKeeper) DeleteEventById(arg0 string) error {
+func (m *MockDataKeeper) DeleteEventByID(arg0 string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEventById", arg0)
+	ret := m.ctrl.Call(m, "DeleteEventByID", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
@@ -60,13 +60,27 @@ func (m *MockDataKeeper) DeleteEventById(arg0 string) error {
 // DeleteEventById indicates an expected call of DeleteEventById.
 func (mr *MockDataKeeperMockRecorder) DeleteEventById(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEventById", reflect.TypeOf((*MockDataKeeper)(nil).DeleteEventById), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEventByID", reflect.TypeOf((*MockDataKeeper)(nil).DeleteEventByID), arg0)
 }
 
-// FindById mocks base method.
-func (m *MockDataKeeper) FindById(arg0 string) (*storage.Event, error) {
+// DeleteOldEvents mocks base method.
+func (m *MockDataKeeper) DeleteOldEvents() error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindById", arg0)
+	ret := m.ctrl.Call(m, "DeleteOldEvents")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteOldEvents indicates an expected call of DeleteOldEvents.
+func (mr *MockDataKeeperMockRecorder) DeleteOldEvents() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOldEvents", reflect.TypeOf((*MockDataKeeper)(nil).DeleteOldEvents))
+}
+
+// FindByID mocks base method.
+func (m *MockDataKeeper) FindByID(arg0 string) (*storage.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByID", arg0)
 	ret0, _ := ret[0].(*storage.Event)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
@@ -75,7 +89,7 @@ func (m *MockDataKeeper) FindById(arg0 string) (*storage.Event, error) {
 // FindById indicates an expected call of FindById.
 func (mr *MockDataKeeperMockRecorder) FindById(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindById", reflect.TypeOf((*MockDataKeeper)(nil).FindById), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockDataKeeper)(nil).FindByID), arg0)
 }
 
 // InsertEvent mocks base method.
@@ -153,6 +167,21 @@ func (mr *MockDataKeeperMockRecorder) SelectMonth(arg0 interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectMonth", reflect.TypeOf((*MockDataKeeper)(nil).SelectMonth), arg0)
 }
 
+// SelectToNotify mocks base method.
+func (m *MockDataKeeper) SelectToNotify() ([]*storage.Event, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SelectToNotify")
+	ret0, _ := ret[0].([]*storage.Event)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SelectToNotify indicates an expected call of SelectToNotify.
+func (mr *MockDataKeeperMockRecorder) SelectToNotify() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SelectToNotify", reflect.TypeOf((*MockDataKeeper)(nil).SelectToNotify))
+}
+
 // SelectWeek mocks base method.
 func (m *MockDataKeeper) SelectWeek(arg0 time.Time) ([]*storage.Event, error) {
 	m.ctrl.T.Helper()
@@ -181,4 +210,18 @@ func (m *MockDataKeeper) UpdateEvent(arg0 *storage.Event) (*storage.Event, error
 func (mr *MockDataKeeperMockRecorder) UpdateEvent(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEvent", reflect.TypeOf((*MockDataKeeper)(nil).UpdateEvent), arg0)
+}
+
+// UpdateSentFlag mocks base method.
+func (m *MockDataKeeper) UpdateSentFlag(arg0 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSentFlag", arg0)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateSentFlag indicates an expected call of UpdateSentFlag.
+func (mr *MockDataKeeperMockRecorder) UpdateSentFlag(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSentFlag", reflect.TypeOf((*MockDataKeeper)(nil).UpdateSentFlag), arg0)
 }

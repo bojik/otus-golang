@@ -53,7 +53,7 @@ func TestStorage(t *testing.T) {
 			}
 			wg.Wait()
 			for i := 0; i < len(ids); i++ {
-				e, err := stor.FindById(ids[i])
+				e, err := stor.FindByID(ids[i])
 				require.Nil(t, err)
 				require.Equal(t, "title", e.Title)
 			}
@@ -65,7 +65,7 @@ func TestStorage(t *testing.T) {
 				i := i
 				go func() {
 					defer wg.Done()
-					e, err := stor.FindById(ids[i])
+					e, err := stor.FindByID(ids[i])
 					require.Nil(t, err)
 					err = stor.DeleteEvent(e)
 					require.Nil(t, err)
@@ -190,7 +190,7 @@ func TestError(t *testing.T) {
 	e = generateEvent()
 	_, err = stor.UpdateEvent(e)
 	require.ErrorIs(t, err, ErrEventNotFound)
-	_, err = stor.FindById("not_found")
+	_, err = stor.FindByID("not_found")
 	require.ErrorIs(t, err, ErrEventNotFound)
 	err = stor.DeleteEvent(e)
 	require.ErrorIs(t, err, ErrEventNotFound)
@@ -202,7 +202,7 @@ func generateEvent() *storage.Event {
 		Description:    "description",
 		StartedAt:      time.Now(),
 		FinishedAt:     time.Now(),
-		UserId:         1,
+		UserID:         1,
 		NotifyInterval: time.Hour,
 	}
 }

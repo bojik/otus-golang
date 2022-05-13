@@ -13,3 +13,16 @@ services:
       - '5432:5432'
     volumes:
       - ../../postgresql:/var/lib/postgresql/data
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "SDFDDSFDSFDSFFDFQWF"
+      RABBITMQ_DEFAULT_USER: "calendar"
+      RABBITMQ_DEFAULT_PASS: "calendar"
+      RABBITMQ_DEFAULT_VHOST: "v_calendar"
+    ports:
+      - 5673:5672
+      - 15673:15672
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq

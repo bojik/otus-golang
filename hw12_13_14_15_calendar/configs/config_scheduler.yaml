@@ -7,9 +7,7 @@ db:
     migrations: "file://./migrations"
     max_idle_connects: 10
     max_open_connects: 10
-http_server:
-    host: '0.0.0.0'
-    port: '8085'
-api_server:
-    host: '0.0.0.0'
-    port: '8086'
+amqp:
+    url: 'amqp://calendar:calendar@0.0.0.0:5673/v_calendar'
+    exchange_name: 'calendar'
+    queue_name: 'calendar'

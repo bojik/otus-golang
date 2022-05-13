@@ -12,10 +12,15 @@ import (
 )
 
 func loggingMiddleware(logg logger.Logger) grpc.UnaryServerInterceptor {
-	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	return func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
 		t1 := time.Now()
 		resp, err := handler(ctx, req)
-		timing := time.Now().Sub(t1)
+		timing := time.Since(t1)
 		var remoteAddr, userAgent string
 		if meta, ok := metadata.FromIncomingContext(ctx); ok {
 			headers := meta.Get("user-agent")

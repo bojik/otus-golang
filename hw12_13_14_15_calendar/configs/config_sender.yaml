@@ -1,0 +1,8 @@
+logger:
+    file: "./var/log/calendar.log"
+    level: DEBUG
+amqp:
+    url: 'amqp://calendar:calendar@0.0.0.0:5673/v_calendar'
+    exchange_name: 'calendar'
+    queue_name: 'calendar'
+threads: 3

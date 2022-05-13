@@ -7,7 +7,7 @@ type Event struct {
 	StartedAt      time.Time
 	Title          string
 	Description    string
-	UserId         int
+	UserID         int
 	FinishedAt     time.Time
 	NotifyInterval time.Duration
 }
