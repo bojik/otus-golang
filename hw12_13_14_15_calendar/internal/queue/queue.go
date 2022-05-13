@@ -9,7 +9,7 @@ import (
 
 	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/app"
 	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/logger"
-	"github.com/cenkalti/backoff/v4"
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/streadway/amqp"
 )
 
