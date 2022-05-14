@@ -19,12 +19,12 @@ func TestApp(t *testing.T) {
 		Title:      "Title",
 		StartedAt:  time.Now(),
 		FinishedAt: time.Now().Add(time.Hour),
-		UserId:     10,
+		UserID:     10,
 	}
 	id, err := app.CreateEvent(context.Background(), evt)
 	require.Nil(t, err)
 	require.NotEmpty(t, id)
-	e, err := app.FindById(context.Background(), id)
+	e, err := app.FindByID(context.Background(), id)
 	require.Nil(t, err)
-	require.Equal(t, id, e.Id)
+	require.Equal(t, id, e.ID)
 }

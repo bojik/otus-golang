@@ -27,7 +27,7 @@ func newLoggingMiddleware(l logger.Logger) func(next http.Handler) http.Handler 
 			}
 			t1 := time.Now()
 			next.ServeHTTP(response, r)
-			timing := time.Now().Sub(t1)
+			timing := time.Since(t1)
 			l.Info(
 				fmt.Sprintf(
 					`%s [%s] %s %s %s %d %.2f "%s"`,

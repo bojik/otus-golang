@@ -52,7 +52,7 @@ func TestLogger(t *testing.T) {
 	logger.Debug(lg[0].msg, lg[0].params...)
 	logger.Info(lg[1].msg, lg[1].params...)
 	logger.Error(lg[2].msg, lg[2].params...)
-	content, err := ioutil.ReadFile(f)
+	content, _ := ioutil.ReadFile(f)
 	lines := strings.Split(string(content), "\n")
 	require.Len(t, lines, len(lg))
 	for i, line := range lines {
@@ -89,7 +89,7 @@ func TestLoggerMultiThreads(t *testing.T) {
 		}()
 	}
 	wg.Wait()
-	content, err := ioutil.ReadFile(f)
+	content, _ := ioutil.ReadFile(f)
 	lines := strings.Split(strings.TrimRight(string(content), "\n"), "\n")
 	require.Equal(t, c, len(lines))
 }
@@ -117,7 +117,7 @@ func TestLoggerMessage(t *testing.T) {
 	for _, l := range lg {
 		logger.Save(l.lvl, l.msg)
 	}
-	content, err := ioutil.ReadFile(f)
+	content, _ := ioutil.ReadFile(f)
 	lines := strings.Split(string(content), "\n")
 	require.Len(t, lines, len(lg)+1)
 	for i, line := range lines {

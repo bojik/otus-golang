@@ -48,8 +48,7 @@ func (s *Server) Start(ctx context.Context) error {
 		Handler:        s.newHandler(),
 	}
 	s.logg.Info("Starting HTTP at " + s.addr)
-	err := s.srv.ListenAndServe()
-	if err != nil {
+	if err := s.srv.ListenAndServe(); err != nil {
 		s.logg.Error(err.Error())
 		return err
 	}

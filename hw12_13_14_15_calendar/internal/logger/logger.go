@@ -18,6 +18,7 @@ const (
 	ERROR
 )
 
+//nolint:lll
 //go:generate mockgen -destination=../mocks/mock_logger.go -package=mocks github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/logger Logger
 type Logger interface {
 	ResetWriters()
@@ -60,14 +61,14 @@ func (l *logg) AddLogFile(logFile string) (*os.File, error) {
 	dir := path.Dir(logFile)
 	_, err := os.Stat(dir)
 	if os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return nil, err
 		}
 	}
 	if !os.IsNotExist(err) && err != nil {
 		return nil, err
 	}
-	fp, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	fp, err := os.OpenFile(logFile, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, err
 	}

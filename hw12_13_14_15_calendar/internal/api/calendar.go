@@ -10,24 +10,25 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+//nolint:lll
 //go:generate protoc --proto_path=../../api/ --go_out=../../pkg/calendarpb --go-grpc_out=../../pkg/calendarpb ../../api/EventService.proto
-type CalendarApi struct {
+type CalendarAPI struct {
 	app  *app.App
 	logg logger.Logger
 	pb.UnimplementedCalendarServer
 }
 
-func NewCalendarApi(app *app.App, logg logger.Logger) *CalendarApi {
-	return &CalendarApi{
+func NewCalendarAPI(app *app.App, logg logger.Logger) *CalendarAPI {
+	return &CalendarAPI{
 		app:  app,
 		logg: logg,
 	}
 }
 
-func (s *CalendarApi) InsertEvent(ctx context.Context, evt *pb.Event) (*pb.Event, error) {
+func (s *CalendarAPI) InsertEvent(ctx context.Context, evt *pb.Event) (*pb.Event, error) {
 	newEvent := app.Event{
 		Title:          evt.Title,
-		UserId:         int(evt.UserId),
+		UserID:         int(evt.UserId),
 		Description:    evt.Description,
 		StartedAt:      evt.StartedAt.AsTime(),
 		FinishedAt:     evt.FinishedAt.AsTime(),
@@ -37,18 +38,18 @@ func (s *CalendarApi) InsertEvent(ctx context.Context, evt *pb.Event) (*pb.Event
 	if err != nil {
 		return nil, err
 	}
-	dbEvent, err := s.app.FindById(ctx, id)
+	dbEvent, err := s.app.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return s.fillEvent(dbEvent), nil
 }
 
-func (s *CalendarApi) UpdateEvent(ctx context.Context, evt *pb.Event) (*pb.Event, error) {
+func (s *CalendarAPI) UpdateEvent(ctx context.Context, evt *pb.Event) (*pb.Event, error) {
 	event := app.Event{
-		Id:             evt.Id,
+		ID:             evt.Id,
 		Title:          evt.Title,
-		UserId:         int(evt.UserId),
+		UserID:         int(evt.UserId),
 		Description:    evt.Description,
 		StartedAt:      evt.StartedAt.AsTime(),
 		FinishedAt:     evt.FinishedAt.AsTime(),
@@ -57,15 +58,15 @@ func (s *CalendarApi) UpdateEvent(ctx context.Context, evt *pb.Event) (*pb.Event
 	if err := s.app.UpdateEvent(ctx, event); err != nil {
 		return nil, err
 	}
-	dbEvent, err := s.app.FindById(ctx, event.Id)
+	dbEvent, err := s.app.FindByID(ctx, event.ID)
 	if err != nil {
 		return nil, err
 	}
 	return s.fillEvent(dbEvent), nil
 }
 
-func (s *CalendarApi) FindEventById(ctx context.Context, id *pb.Id) (*pb.Event, error) {
-	evt, err := s.app.FindById(ctx, id.Id)
+func (s *CalendarAPI) FindEventByID(ctx context.Context, id *pb.Id) (*pb.Event, error) {
+	evt, err := s.app.FindByID(ctx, id.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +74,8 @@ func (s *CalendarApi) FindEventById(ctx context.Context, id *pb.Id) (*pb.Event, 
 	return event, nil
 }
 
-func (s *CalendarApi) DeleteEvent(ctx context.Context, id *pb.Id) (*pb.Event, error) {
-	evt, err := s.app.DeleteById(ctx, id.Id)
+func (s *CalendarAPI) DeleteEvent(ctx context.Context, id *pb.Id) (*pb.Event, error) {
+	evt, err := s.app.DeleteByID(ctx, id.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (s *CalendarApi) DeleteEvent(ctx context.Context, id *pb.Id) (*pb.Event, er
 	return event, nil
 }
 
-func (s *CalendarApi) FindEventsByInterval(ctx context.Context, interval *pb.Interval) (*pb.Events, error) {
+func (s *CalendarAPI) FindEventsByInterval(ctx context.Context, interval *pb.Interval) (*pb.Events, error) {
 	ets, err := s.app.FindEventsByInterval(ctx, interval.StartedAt.AsTime(), interval.FinishedAt.AsTime())
 	if err != nil {
 		return nil, err
@@ -90,14 +91,7 @@ func (s *CalendarApi) FindEventsByInterval(ctx context.Context, interval *pb.Int
 	return &pb.Events{Events: s.fillEvents(ets)}, nil
 }
 
-func (s *CalendarApi) FindDayEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
-	ets, err := s.app.FindDayEvents(ctx, date.AsTime())
-	if err != nil {
-		return nil, err
-	}
-	return &pb.Events{Events: s.fillEvents(ets)}, nil
-}
-func (s *CalendarApi) FindWeekEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
+func (s *CalendarAPI) FindDayEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
 	ets, err := s.app.FindDayEvents(ctx, date.AsTime())
 	if err != nil {
 		return nil, err
@@ -105,7 +99,7 @@ func (s *CalendarApi) FindWeekEvents(ctx context.Context, date *timestamppb.Time
 	return &pb.Events{Events: s.fillEvents(ets)}, nil
 }
 
-func (s *CalendarApi) FindMonthEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
+func (s *CalendarAPI) FindWeekEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
 	ets, err := s.app.FindDayEvents(ctx, date.AsTime())
 	if err != nil {
 		return nil, err
@@ -113,20 +107,28 @@ func (s *CalendarApi) FindMonthEvents(ctx context.Context, date *timestamppb.Tim
 	return &pb.Events{Events: s.fillEvents(ets)}, nil
 }
 
-func (s *CalendarApi) fillEvent(evt *app.Event) *pb.Event {
+func (s *CalendarAPI) FindMonthEvents(ctx context.Context, date *timestamppb.Timestamp) (*pb.Events, error) {
+	ets, err := s.app.FindDayEvents(ctx, date.AsTime())
+	if err != nil {
+		return nil, err
+	}
+	return &pb.Events{Events: s.fillEvents(ets)}, nil
+}
+
+func (s *CalendarAPI) fillEvent(evt *app.Event) *pb.Event {
 	event := &pb.Event{
-		Id:             evt.Id,
+		Id:             evt.ID,
 		Title:          evt.Title,
 		StartedAt:      timestamppb.New(evt.StartedAt),
 		FinishedAt:     timestamppb.New(evt.FinishedAt),
 		Description:    evt.Description,
-		UserId:         int32(evt.UserId),
+		UserId:         int32(evt.UserID),
 		NotifyInterval: durationpb.New(evt.NotifyInterval),
 	}
 	return event
 }
 
-func (s *CalendarApi) fillEvents(evts []*app.Event) []*pb.Event {
+func (s *CalendarAPI) fillEvents(evts []*app.Event) []*pb.Event {
 	if len(evts) == 0 {
 		return []*pb.Event{}
 	}
