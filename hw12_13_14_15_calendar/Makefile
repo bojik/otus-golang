@@ -26,7 +26,7 @@ build-img:
 	docker build \
 		--build-arg=LDFLAGS="$(LDFLAGS)" \
 		-t $(DOCKER_IMG) \
-		-f build/Dockerfile .
+		-f build/calendar/Dockerfile .
 
 run-img: build-img
 	docker run $(DOCKER_IMG)

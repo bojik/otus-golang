@@ -43,6 +43,7 @@ func (c *Config) initDefaults() error {
 	if err := viper.Unmarshal(&c); err != nil {
 		return err
 	}
+	config.LoadFromEnv()
 	return nil
 }
 

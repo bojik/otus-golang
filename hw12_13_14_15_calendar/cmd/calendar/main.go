@@ -59,13 +59,15 @@ func main() {
 		panic(err)
 	}
 	logg := logger.New(minLevelOpt)
-	lf, err := logg.AddLogFile(config.Logger.File)
-	if err != nil {
-		panic(err)
+	if config.Logger.File != "" {
+		lf, err := logg.AddLogFile(config.Logger.File)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			_ = lf.Close()
+		}()
 	}
-	defer func() {
-		_ = lf.Close()
-	}()
 
 	var (
 		db       *sqlstorage.Storage
@@ -160,7 +162,11 @@ func createDBStorage(
 		if xerrors.Is(err, migrate.ErrNoChange) {
 			logg.Info("migration: " + err.Error())
 		} else {
-			logg.Error("failed to execute db migrations: " + err.Error())
+			logg.Error(
+				"failed to execute db migrations: "+err.Error(),
+				logger.NewStringParam("dir", config.DB.Migrations),
+				logger.NewStringParam("dsn", config.DB.Dsn),
+			)
 			panic(err)
 		}
 	}

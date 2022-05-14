@@ -1,6 +1,10 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"strings"
+
+	"github.com/spf13/viper"
+)
 
 const (
 	DBTypeMemory     = "memory"
@@ -32,7 +36,7 @@ func InitLoggerConfig() {
 }
 
 func InitDBConfig() {
-	viper.SetDefault("db.type", DBTypeMemory)
+	viper.SetDefault("db.type", DBTypePostgresql)
 	viper.SetDefault("db.dsn", "")
 	viper.SetDefault("db.migrations", "")
 	viper.SetDefault("db.max_idle_connects", "10")
@@ -43,4 +47,11 @@ func InitAMQPConfig() {
 	viper.SetDefault("amqp.url", "")
 	viper.SetDefault("amqp.exchange_name", "")
 	viper.SetDefault("amqp.queue_name", "")
+}
+
+func LoadFromEnv() {
+	viper.SetEnvPrefix("calendar")
+	replacer := strings.NewReplacer(".", "_")
+	viper.SetEnvKeyReplacer(replacer)
+	viper.AutomaticEnv()
 }

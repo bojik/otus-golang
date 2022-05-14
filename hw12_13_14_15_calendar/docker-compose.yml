@@ -1,9 +1,49 @@
 version: '3.8'
 services:
-  app:
+  calendar:
     build:
-      dockerfile: build/Dockerfile
+      dockerfile: build/calendar/Dockerfile
       context: .
+    environment:
+      - CALENDAR_DB_DSN=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      - CALENDAR_DB_MIGRATIONS=file:///etc/calendar/migrations/
+      - CALENDAR_LOGGER_FILE=
+      - CALENDAR_LOGGER_LEVEL=INFO
+      - CALENDAR_HTTP_SERVER_PORT=8085
+      - CALENDAR_API_SERVER_PORT=8086
+    ports:
+      - 8085:8085
+      - 8086:8086
+    depends_on:
+      - db
+  scheduler:
+    build:
+      dockerfile: build/calendar-scheduler/Dockerfile
+      context: .
+    environment:
+      - CALENDAR_DB_DSN=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
+      - CALENDAR_AMQP_URL=amqp://calendar:calendar@rabbitmq:5672/v_calendar
+      - CALENDAR_AMQP_EXCHANGE_NAME=calendar
+      - CALENDAR_AMQP_QUEUE_NAME=calendar
+      - CALENDAR_LOGGER_FILE=
+      - CALENDAR_LOGGER_LEVEL=INFO
+      - CALENDAR_SELECT_INTERVAL=5s
+    depends_on:
+      - db
+      - rabbitmq
+  sender:
+    build:
+      dockerfile: build/calendar-sender/Dockerfile
+      context: .
+    environment:
+      - CALENDAR_AMQP_URL=amqp://calendar:calendar@rabbitmq:5672/v_calendar
+      - CALENDAR_AMQP_EXCHANGE_NAME=calendar
+      - CALENDAR_AMQP_QUEUE_NAME=calendar
+      - CALENDAR_LOGGER_FILE=
+      - CALENDAR_LOGGER_LEVEL=INFO
+      - CALENDAR_THREADS=3
+    depends_on:
+      - rabbitmq
   db:
     image: postgres:latest
     environment:

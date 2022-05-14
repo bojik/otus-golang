@@ -33,13 +33,15 @@ func main() {
 		panic(err)
 	}
 	logg := logger.New(minLevelOpt)
-	lf, err := logg.AddLogFile(config.Logger.File)
-	if err != nil {
-		panic(err)
+	if config.Logger.File != "" {
+		lf, err := logg.AddLogFile(config.Logger.File)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			_ = lf.Close()
+		}()
 	}
-	defer func() {
-		_ = lf.Close()
-	}()
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
