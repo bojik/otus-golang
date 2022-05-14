@@ -121,22 +121,30 @@ func (q *Queue) Publish(ctx context.Context, d time.Duration, a *app.App) error 
 }
 
 func (q *Queue) Consume(ctx context.Context, threads int) error {
+	q.l.Debug("start consuming")
 	msgs, err := q.announceQueue()
 	if err != nil {
 		return fmt.Errorf("queue Consume: %w", err)
 	}
 	for {
+		q.l.Debug(fmt.Sprintf("starting %d routines", threads))
 		for i := 0; i < threads; i++ {
 			go q.worker(ctx, msgs)
 		}
 
-		if <-q.done != nil {
-			msgs, err = q.reConnect(ctx)
-			if err != nil {
-				return fmt.Errorf("reconnecting Error: %w", err)
+		select {
+		case d := <-q.done:
+			if d != nil {
+				msgs, err = q.reConnect(ctx)
+				if err != nil {
+					return fmt.Errorf("reconnecting Error: %w", err)
+				}
 			}
+			q.l.Info("reconnected... possibly")
+		case <-ctx.Done():
+			q.l.Debug("receiving stop signal")
+			return nil
 		}
-		q.l.Info("reconnected... possibly")
 	}
 }
 
@@ -231,6 +239,7 @@ func (q *Queue) reConnect(ctx context.Context) (<-chan amqp.Delivery, error) {
 
 		select {
 		case <-time.After(d):
+			q.l.Debug("reconnect")
 			if err := q.Connect(); err != nil {
 				q.l.Error("could not connect in reconnect call: " + err.Error())
 				continue
@@ -243,6 +252,7 @@ func (q *Queue) reConnect(ctx context.Context) (<-chan amqp.Delivery, error) {
 
 			return msgs, nil
 		case <-ctx.Done():
+			q.l.Debug("context done")
 			return nil, nil
 		}
 	}
