@@ -6,23 +6,29 @@ import (
 
 	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/storage"
 	migrate "github.com/golang-migrate/migrate/v4"
+	// postgresql driver.
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	// file driver.
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 const (
-	SqlInsertEvent = `insert into event(id, title, started_at, description, user_id, finished_at, notify_interval) 
+	SQLInsertEvent = `insert into event(id, title, started_at, description, user_id, finished_at, notify_interval) 
 		values(:id, :title, :started_at, :description, :user_id, :finished_at, :notify_interval)`
-	SqlUpdateEvent = `update event set title = :title, started_at = :started_at, description = :description, 
+	SQLUpdateEvent = `update event set title = :title, started_at = :started_at, description = :description, 
                  user_id = :user_id, finished_at = :finished_at, notify_interval = :notify_interval where id = :id`
-	SqlSelectById = `select id, title, started_at, description, user_id, finished_at, notify_interval from event
+	SQLSelectByID = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event
 				where id = :id`
-	SqlDeleteById     = `delete from event where id = :id`
-	SqlSelectAll      = `select id, title, started_at, description, user_id, finished_at, notify_interval from event`
-	SqlSelectInterval = `select id, title, started_at, description, user_id, finished_at, notify_interval from event 
+	SQLDeleteByID     = `delete from event where id = :id`
+	SQLSelectAll      = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event`
+	SQLSelectInterval = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event 
 				where started_at between :start_date and :end_date order by started_at`
+	SQLSelectNotify = `select id, title, description, started_at, finished_at, sent from event
+		where started_at - ((notify_interval / 1000000000)::text||' seconds')::interval <= current_timestamp and not sent`
+	SQLUpdateSent      = `update event set sent = true where id = :id`
+	SQLDeleteOldEvents = `delete from event where finished_at < current_timestamp - '1 year'::interval`
 )
 
 type Storage struct {
@@ -108,11 +114,11 @@ func (s *Storage) FixAndForce(migrationSource string, version int) error {
 func (s *Storage) InsertEvent(evt *storage.Event) (string, error) {
 	id := uuid.New().String()
 	_, err := s.db.NamedExec(
-		SqlInsertEvent,
+		SQLInsertEvent,
 		map[string]interface{}{
 			"id":              id,
 			"title":           evt.Title,
-			"user_id":         evt.UserId,
+			"user_id":         evt.UserID,
 			"started_at":      evt.StartedAt,
 			"finished_at":     evt.FinishedAt,
 			"description":     evt.Description,
@@ -128,11 +134,11 @@ func (s *Storage) InsertEvent(evt *storage.Event) (string, error) {
 
 func (s *Storage) UpdateEvent(evt *storage.Event) (*storage.Event, error) {
 	_, err := s.db.NamedExec(
-		SqlUpdateEvent,
+		SQLUpdateEvent,
 		map[string]interface{}{
 			"id":              evt.ID,
 			"title":           evt.Title,
-			"user_id":         evt.UserId,
+			"user_id":         evt.UserID,
 			"started_at":      evt.StartedAt,
 			"finished_at":     evt.FinishedAt,
 			"description":     evt.Description,
@@ -145,8 +151,8 @@ func (s *Storage) UpdateEvent(evt *storage.Event) (*storage.Event, error) {
 	return evt, nil
 }
 
-func (s *Storage) FindById(id string) (*storage.Event, error) {
-	rows, err := s.db.NamedQuery(SqlSelectById, map[string]interface{}{"id": id})
+func (s *Storage) FindByID(id string) (*storage.Event, error) {
+	rows, err := s.db.NamedQuery(SQLSelectByID, map[string]interface{}{"id": id})
 	if err != nil {
 		return nil, err
 	}
@@ -160,9 +166,10 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 			&evt.Title,
 			&evt.StartedAt,
 			&evt.Description,
-			&evt.UserId,
+			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -170,8 +177,8 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 	return evt, nil
 }
 
-func (s *Storage) DeleteEventById(id string) error {
-	_, err := s.db.NamedExec(SqlDeleteById, map[string]interface{}{"id": id})
+func (s *Storage) DeleteEventByID(id string) error {
+	_, err := s.db.NamedExec(SQLDeleteByID, map[string]interface{}{"id": id})
 	if err != nil {
 		return err
 	}
@@ -179,16 +186,19 @@ func (s *Storage) DeleteEventById(id string) error {
 }
 
 func (s *Storage) DeleteEvent(evt *storage.Event) error {
-	if err := s.DeleteEventById(evt.ID); err != nil {
+	if err := s.DeleteEventByID(evt.ID); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *Storage) SelectAll() ([]*storage.Event, error) {
-	rows, err := s.db.Query(SqlSelectAll)
+	rows, err := s.db.Query(SQLSelectAll)
 	if err != nil {
 		return nil, err
+	}
+	if rows.Err() != nil {
+		return nil, rows.Err()
 	}
 	defer func() {
 		_ = rows.Close()
@@ -201,9 +211,10 @@ func (s *Storage) SelectAll() ([]*storage.Event, error) {
 			&evt.Title,
 			&evt.StartedAt,
 			&evt.Description,
-			&evt.UserId,
+			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -214,7 +225,7 @@ func (s *Storage) SelectAll() ([]*storage.Event, error) {
 
 func (s *Storage) SelectInterval(startTime, endTime time.Time) ([]*storage.Event, error) {
 	rows, err := s.db.NamedQuery(
-		SqlSelectInterval,
+		SQLSelectInterval,
 		map[string]interface{}{"start_date": startTime, "end_date": endTime},
 	)
 	if err != nil {
@@ -231,9 +242,10 @@ func (s *Storage) SelectInterval(startTime, endTime time.Time) ([]*storage.Event
 			&evt.Title,
 			&evt.StartedAt,
 			&evt.Description,
-			&evt.UserId,
+			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -271,8 +283,46 @@ func (s *Storage) SelectMonth(date time.Time) ([]*storage.Event, error) {
 	return s.SelectInterval(startTime, endTime)
 }
 
-func (s *Storage) getDb() *sqlx.DB {
-	return s.db
+func (s *Storage) SelectToNotify() ([]*storage.Event, error) {
+	rows, err := s.db.Queryx(SQLSelectNotify)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+	var events []*storage.Event
+	for rows.Next() {
+		evt := &storage.Event{}
+		if err := rows.Scan(
+			&evt.ID,
+			&evt.Title,
+			&evt.Description,
+			&evt.StartedAt,
+			&evt.FinishedAt,
+			&evt.Sent,
+		); err != nil {
+			return nil, err
+		}
+		events = append(events, evt)
+	}
+	return events, nil
+}
+
+func (s *Storage) UpdateSentFlag(id string) error {
+	_, err := s.db.NamedExec(SQLUpdateSent, map[string]interface{}{"id": id})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Storage) DeleteOldEvents() error {
+	_, err := s.db.Exec(SQLDeleteOldEvents)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 var _ storage.DataKeeper = (*Storage)(nil)

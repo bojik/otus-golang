@@ -15,6 +15,18 @@ type Storage struct {
 	mu     sync.RWMutex
 }
 
+func (s *Storage) DeleteOldEvents() error {
+	return nil
+}
+
+func (s *Storage) UpdateSentFlag(id string) error {
+	return nil
+}
+
+func (s *Storage) SelectToNotify() ([]*storage.Event, error) {
+	return nil, nil
+}
+
 func New() *Storage {
 	return &Storage{
 		events: map[string]*storage.Event{},
@@ -44,7 +56,7 @@ func (s *Storage) UpdateEvent(evt *storage.Event) (*storage.Event, error) {
 	return evt, nil
 }
 
-func (s *Storage) FindById(id string) (*storage.Event, error) {
+func (s *Storage) FindByID(id string) (*storage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	ret, ok := s.events[id]
@@ -54,11 +66,10 @@ func (s *Storage) FindById(id string) (*storage.Event, error) {
 	return ret, nil
 }
 
-func (s *Storage) DeleteEventById(id string) error {
+func (s *Storage) DeleteEventByID(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	_, ok := s.events[id]
-	if !ok {
+	if _, ok := s.events[id]; !ok {
 		return fmt.Errorf("%w: id = %s", ErrEventNotFound, id)
 	}
 	delete(s.events, id)
@@ -66,7 +77,7 @@ func (s *Storage) DeleteEventById(id string) error {
 }
 
 func (s *Storage) DeleteEvent(evt *storage.Event) error {
-	if err := s.DeleteEventById(evt.ID); err != nil {
+	if err := s.DeleteEventByID(evt.ID); err != nil {
 		return err
 	}
 	return nil

@@ -19,7 +19,7 @@ func TestCalendarApi_InsertEvent(t *testing.T) {
 	logg := mocks.NewMockLogger(ctr)
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
-	api := NewCalendarApi(a, logg)
+	api := NewCalendarAPI(a, logg)
 	cases := []struct {
 		e *app.Event
 	}{{
@@ -28,7 +28,7 @@ func TestCalendarApi_InsertEvent(t *testing.T) {
 			StartedAt:      time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
 			FinishedAt:     time.Date(2022, 3, 2, 0, 0, 0, 0, time.UTC),
 			Description:    "",
-			UserId:         10,
+			UserID:         10,
 			NotifyInterval: time.Hour,
 		},
 	}}
@@ -45,7 +45,6 @@ func TestCalendarApi_InsertEvent(t *testing.T) {
 			require.Equal(t, tc.e.Title, e.Title)
 		})
 	}
-
 }
 
 func TestCalendarApi_UpdateEvent(t *testing.T) {
@@ -53,7 +52,7 @@ func TestCalendarApi_UpdateEvent(t *testing.T) {
 	logg := mocks.NewMockLogger(ctr)
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
-	api := NewCalendarApi(a, logg)
+	api := NewCalendarAPI(a, logg)
 	cases := []struct {
 		e *app.Event
 	}{{
@@ -62,7 +61,7 @@ func TestCalendarApi_UpdateEvent(t *testing.T) {
 			StartedAt:      time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
 			FinishedAt:     time.Date(2022, 3, 2, 0, 0, 0, 0, time.UTC),
 			Description:    "",
-			UserId:         10,
+			UserID:         10,
 			NotifyInterval: time.Hour,
 		},
 	}}
@@ -86,17 +85,17 @@ func TestCalendarApi_DeleteEvent(t *testing.T) {
 	logg := mocks.NewMockLogger(ctr)
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
-	api := NewCalendarApi(a, logg)
+	api := NewCalendarAPI(a, logg)
 	cases := []struct {
 		e *app.Event
 	}{{
 		&app.Event{
-			Id:             "123-123",
+			ID:             "123-123",
 			Title:          "title",
 			StartedAt:      time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
 			FinishedAt:     time.Date(2022, 3, 2, 0, 0, 0, 0, time.UTC),
 			Description:    "",
-			UserId:         10,
+			UserID:         10,
 			NotifyInterval: time.Hour,
 		},
 	}}
@@ -105,9 +104,9 @@ func TestCalendarApi_DeleteEvent(t *testing.T) {
 		t.Run("delete event", func(t *testing.T) {
 			logg.EXPECT().Info(gomock.Any()).AnyTimes()
 			logg.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
-			dataKeeper.EXPECT().FindById(tc.e.Id).Return(tc.e.ConvertToStorageEvent(), nil)
-			dataKeeper.EXPECT().DeleteEventById(tc.e.Id).Return(nil)
-			e, err := api.DeleteEvent(context.Background(), &pb.Id{Id: tc.e.Id})
+			dataKeeper.EXPECT().FindById(tc.e.ID).Return(tc.e.ConvertToStorageEvent(), nil)
+			dataKeeper.EXPECT().DeleteEventById(tc.e.ID).Return(nil)
+			e, err := api.DeleteEvent(context.Background(), &pb.Id{Id: tc.e.ID})
 			require.Nil(t, err)
 			require.Equal(t, tc.e.Title, e.Title)
 		})
@@ -119,7 +118,7 @@ func TestCalendarApi_FindEventsByInterval(t *testing.T) {
 	logg := mocks.NewMockLogger(ctr)
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
-	api := NewCalendarApi(a, logg)
+	api := NewCalendarAPI(a, logg)
 	cases := []struct {
 		e []*storage.Event
 		f time.Time
@@ -131,7 +130,7 @@ func TestCalendarApi_FindEventsByInterval(t *testing.T) {
 			StartedAt:      time.Date(2022, 3, 1, 0, 0, 0, 0, time.UTC),
 			FinishedAt:     time.Date(2022, 3, 2, 0, 0, 0, 0, time.UTC),
 			Description:    "",
-			UserId:         10,
+			UserID:         10,
 			NotifyInterval: time.Hour,
 		}},
 		time.Date(2022, 2, 28, 0, 0, 0, 0, time.UTC),

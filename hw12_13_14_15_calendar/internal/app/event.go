@@ -8,24 +8,26 @@ import (
 )
 
 type Event struct {
-	Id             string
+	ID             string
 	Title          string
 	StartedAt      time.Time
 	FinishedAt     time.Time
 	Description    string
-	UserId         int
+	UserID         int
 	NotifyInterval time.Duration
+	Sent           bool
 }
 
 func newFromStorageEvent(evt *storage.Event) *Event {
 	return &Event{
-		Id:             evt.ID,
+		ID:             evt.ID,
 		Title:          evt.Title,
 		StartedAt:      evt.StartedAt,
 		FinishedAt:     evt.FinishedAt,
 		Description:    evt.Description,
-		UserId:         evt.UserId,
+		UserID:         evt.UserID,
 		NotifyInterval: evt.NotifyInterval,
+		Sent:           evt.Sent,
 	}
 }
 
@@ -42,13 +44,14 @@ func newFromStorageEventCollection(events []*storage.Event) []*Event {
 
 func (e Event) ConvertToStorageEvent() *storage.Event {
 	return &storage.Event{
-		ID:             e.Id,
+		ID:             e.ID,
 		Title:          e.Title,
 		StartedAt:      e.StartedAt,
 		FinishedAt:     e.FinishedAt,
 		Description:    e.Description,
-		UserId:         e.UserId,
+		UserID:         e.UserID,
 		NotifyInterval: e.NotifyInterval,
+		Sent:           e.Sent,
 	}
 }
 
@@ -56,7 +59,7 @@ func (e Event) validate() error {
 	if e.Title == "" {
 		return fmt.Errorf("title %w", ErrRequiredField)
 	}
-	if e.UserId == 0 {
+	if e.UserID == 0 {
 		return fmt.Errorf("userId %w", ErrRequiredField)
 	}
 	if e.FinishedAt.Before(e.StartedAt) {

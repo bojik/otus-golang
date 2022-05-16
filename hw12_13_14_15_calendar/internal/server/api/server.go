@@ -17,7 +17,7 @@ type Server struct {
 	srv  *grpc.Server
 }
 
-func NewServer(addr string, api *api.CalendarApi, logg logger.Logger) *Server {
+func NewServer(addr string, api *api.CalendarAPI, logg logger.Logger) *Server {
 	s := &Server{
 		addr: addr,
 		logg: logg,

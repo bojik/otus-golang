@@ -1,6 +1,7 @@
 package internalhttp
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func TestIndexServeHTTP(t *testing.T) {
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
 	server := NewServer(logg, a, "")
-	req, err := http.NewRequest("GET", "/", nil)
+	req, err := http.NewRequestWithContext(context.Background(), "GET", "/", nil)
 	require.Nil(t, err)
 	rr := httptest.NewRecorder()
 	handler := server.newHandler()
@@ -38,6 +39,7 @@ func TestEventCreate(t *testing.T) {
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
 	server := NewServer(logg, a, "")
+	//nolint:lll
 	cases := []struct {
 		e storage.Event
 		b string
@@ -45,27 +47,28 @@ func TestEventCreate(t *testing.T) {
 		{
 			e: storage.Event{
 				Title:          "title",
-				UserId:         10,
+				UserID:         10,
 				StartedAt:      time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC),
 				FinishedAt:     time.Date(2022, 12, 1, 23, 0, 0, 0, time.UTC),
 				NotifyInterval: time.Hour,
 			},
-			b: `{"Success":true,"Error":"","Data":{"Event":{"Id":"","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserId":10,"NotifyInterval":3600000000000}}}`,
+			b: `{"Success":true,"Error":"","Data":{"Event":{"ID":"","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserID":10,"NotifyInterval":3600000000000,"Sent":false}}}`,
 		},
 	}
 	for _, tc := range cases {
 		tc := tc
 		t.Run(tc.e.Title, func(t *testing.T) {
 			logg.EXPECT().Info(gomock.Any()).AnyTimes()
+			logg.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 			logg.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
 			dataKeeper.EXPECT().SelectInterval(tc.e.StartedAt, tc.e.FinishedAt).Return(nil, nil)
 			dataKeeper.EXPECT().InsertEvent(&tc.e).Return("123-123", nil)
 			dataKeeper.EXPECT().FindById("123-123").Return(&tc.e, nil)
 			params := url.Values{
 				"title":           []string{tc.e.Title},
-				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserId)},
-				"started_at":      []string{tc.e.StartedAt.Format(time.RFC3339)},
-				"finished_at":     []string{tc.e.FinishedAt.Format(time.RFC3339)},
+				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserID)},
+				"started_at":      []string{tc.e.StartedAt.Format(FormatDateTime)},
+				"finished_at":     []string{tc.e.FinishedAt.Format(FormatDateTime)},
 				"notify_interval": []string{"1h"},
 			}
 			req := httptest.NewRequest("GET", "/events/create/?"+params.Encode(), nil)
@@ -94,7 +97,7 @@ func TestEventUpdate(t *testing.T) {
 			e: storage.Event{
 				ID:             "123-123",
 				Title:          "title",
-				UserId:         10,
+				UserID:         10,
 				StartedAt:      time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC),
 				FinishedAt:     time.Date(2022, 12, 1, 23, 0, 0, 0, time.UTC),
 				NotifyInterval: time.Hour,
@@ -113,9 +116,9 @@ func TestEventUpdate(t *testing.T) {
 			params := url.Values{
 				"id":              []string{tc.e.ID},
 				"title":           []string{tc.e.Title},
-				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserId)},
-				"started_at":      []string{tc.e.StartedAt.Format(time.RFC3339)},
-				"finished_at":     []string{tc.e.FinishedAt.Format(time.RFC3339)},
+				"user_id":         []string{fmt.Sprintf("%d", tc.e.UserID)},
+				"started_at":      []string{tc.e.StartedAt.Format(FormatDateTime)},
+				"finished_at":     []string{tc.e.FinishedAt.Format(FormatDateTime)},
 				"notify_interval": []string{"1h"},
 			}
 			req := httptest.NewRequest("GET", "/events/edit/?"+params.Encode(), nil)
@@ -136,6 +139,7 @@ func TestEventDelete(t *testing.T) {
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
 	server := NewServer(logg, a, "")
+	//nolint:lll
 	cases := []struct {
 		e storage.Event
 		b string
@@ -144,12 +148,12 @@ func TestEventDelete(t *testing.T) {
 			e: storage.Event{
 				ID:             "123-123",
 				Title:          "title",
-				UserId:         10,
+				UserID:         10,
 				StartedAt:      time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC),
 				FinishedAt:     time.Date(2022, 12, 1, 23, 0, 0, 0, time.UTC),
 				NotifyInterval: time.Hour,
 			},
-			b: `{"Success":true,"Error":"","Data":{"Event":{"Id":"123-123","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserId":10,"NotifyInterval":3600000000000}}}`,
+			b: `{"Success":true,"Error":"","Data":{"Event":{"ID":"123-123","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserID":10,"NotifyInterval":3600000000000,"Sent":false}}}`,
 		},
 	}
 	for _, tc := range cases {
@@ -180,6 +184,7 @@ func TestFindEvents(t *testing.T) {
 	dataKeeper := mocks.NewMockDataKeeper(ctr)
 	a := app.New(logg, dataKeeper)
 	server := NewServer(logg, a, "")
+	//nolint:lll
 	cases := []struct {
 		e []*storage.Event
 		f time.Time
@@ -188,18 +193,18 @@ func TestFindEvents(t *testing.T) {
 	}{
 		{
 			e: []*storage.Event{
-				&storage.Event{
+				{
 					ID:             "123-123",
 					Title:          "title",
-					UserId:         10,
+					UserID:         10,
 					StartedAt:      time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC),
 					FinishedAt:     time.Date(2022, 12, 1, 23, 0, 0, 0, time.UTC),
 					NotifyInterval: time.Hour,
 				},
-				&storage.Event{
+				{
 					ID:             "321-456",
 					Title:          "title",
-					UserId:         10,
+					UserID:         10,
 					StartedAt:      time.Date(2022, 12, 1, 0, 0, 0, 0, time.UTC),
 					FinishedAt:     time.Date(2022, 12, 1, 23, 0, 0, 0, time.UTC),
 					NotifyInterval: time.Hour,
@@ -207,7 +212,7 @@ func TestFindEvents(t *testing.T) {
 			},
 			f: time.Date(2022, 11, 30, 0, 0, 0, 0, time.UTC),
 			t: time.Date(2022, 12, 2, 23, 0, 0, 0, time.UTC),
-			b: `{"Success":true,"Error":"","Data":{"Events":[{"Id":"123-123","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserId":10,"NotifyInterval":3600000000000},{"Id":"321-456","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserId":10,"NotifyInterval":3600000000000}]}}`,
+			b: `{"Success":true,"Error":"","Data":{"Events":[{"ID":"123-123","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserID":10,"NotifyInterval":3600000000000,"Sent":false},{"ID":"321-456","Title":"title","StartedAt":"2022-12-01T00:00:00Z","FinishedAt":"2022-12-01T23:00:00Z","Description":"","UserID":10,"NotifyInterval":3600000000000,"Sent":false}]}}`,
 		},
 	}
 	for _, tc := range cases {
@@ -217,8 +222,8 @@ func TestFindEvents(t *testing.T) {
 			logg.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
 			dataKeeper.EXPECT().SelectInterval(tc.f, tc.t).Return(tc.e, nil)
 			params := url.Values{
-				"from_date": []string{tc.f.Format(time.RFC3339)},
-				"to_date":   []string{tc.t.Format(time.RFC3339)},
+				"from_date": []string{tc.f.Format(FormatDateTime)},
+				"to_date":   []string{tc.t.Format(FormatDateTime)},
 			}
 			req := httptest.NewRequest("GET", "/events/list/?"+params.Encode(), nil)
 			resp := httptest.NewRecorder()

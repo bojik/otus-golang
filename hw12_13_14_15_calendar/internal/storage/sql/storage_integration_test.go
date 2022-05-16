@@ -1,5 +1,5 @@
-//go:build integration
-// +build integration
+//go:build integration1
+// +build integration1
 
 package sqlstorage
 
@@ -63,7 +63,7 @@ func (s *StorageTestSuite) TestCRUD() {
 		Title:          "Title",
 		StartedAt:      time.Now().Add(24 * time.Hour),
 		Description:    "Description",
-		UserId:         1,
+		UserID:         1,
 		FinishedAt:     time.Now().Add(2 * 24 * time.Hour),
 		NotifyInterval: time.Hour,
 	}

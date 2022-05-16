@@ -22,11 +22,14 @@ import (
 )
 
 func main() {
-	configFile := flag.StringP("config", "c", "configs/config.yaml", "Path to configuration file")
-	dumpConfig := flag.BoolP("dump-config", "d", false, "Dump config with default values")
-	migrateDown := flag.IntP("migrate-down", "", 0, "Step back of db migration")
-	fixAndForceMigration := flag.IntP("fix-force", "", 0, "Force sets a migration version. It resets the dirty state to false.")
-	version := flag.BoolP("version", "", false, "Print version of application")
+	//nolint:lll
+	var (
+		configFile           = flag.StringP("config", "c", "configs/config.yaml", "Path to configuration file")
+		dumpConfig           = flag.BoolP("dump-config", "d", false, "Dump config with default values")
+		migrateDown          = flag.IntP("migrate-down", "", 0, "Step back of db migration")
+		fixAndForceMigration = flag.IntP("fix-force", "", 0, "Force sets a migration version. It resets the dirty state to false.")
+		version              = flag.BoolP("version", "", false, "Print version of application")
+	)
 	flag.Parse()
 
 	if *version {
@@ -56,20 +59,22 @@ func main() {
 		panic(err)
 	}
 	logg := logger.New(minLevelOpt)
-	lf, err := logg.AddLogFile(config.Logger.File)
-	if err != nil {
-		panic(err)
+	if config.Logger.File != "" {
+		lf, err := logg.AddLogFile(config.Logger.File)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			_ = lf.Close()
+		}()
 	}
-	defer func() {
-		_ = lf.Close()
-	}()
 
 	var (
 		db       *sqlstorage.Storage
 		calendar *app.App
 	)
-	if config.Db.Type == DbTypePostgresql {
-		db = createDbStorage(config, migrateDown, fixAndForceMigration, logg)
+	if config.DB.Type == DBTypePostgresql {
+		db = createDBStorage(config, migrateDown, fixAndForceMigration, logg)
 		if db == nil {
 			return
 		}
@@ -79,10 +84,10 @@ func main() {
 		calendar = app.New(logg, storage)
 	}
 
-	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(config.HttpServer.Host, config.HttpServer.Port))
+	server := internalhttp.NewServer(logg, calendar, net.JoinHostPort(config.HTTPServer.Host, config.HTTPServer.Port))
 	apiSever := internalapi.NewServer(
-		net.JoinHostPort(config.ApiServer.Host, config.ApiServer.Port),
-		api.NewCalendarApi(calendar, logg),
+		net.JoinHostPort(config.APIServer.Host, config.APIServer.Port),
+		api.NewCalendarAPI(calendar, logg),
 		logg,
 	)
 
@@ -96,7 +101,7 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		if config.Db.Type == DbTypePostgresql {
+		if config.DB.Type == DBTypePostgresql {
 			if err := db.Close(ctx); err != nil {
 				logg.Error("failed to close db connects: " + err.Error())
 			}
@@ -124,12 +129,17 @@ func main() {
 	}
 }
 
-func createDbStorage(config *Config, migrateDown *int, fixAndForceMigration *int, logg logger.Logger) *sqlstorage.Storage {
-	db := sqlstorage.New(config.Db.Dsn, config.Db.MaxIdleConnects, config.Db.MaxOpenConnects)
+func createDBStorage(
+	config *Config,
+	migrateDown *int,
+	fixAndForceMigration *int,
+	logg logger.Logger,
+) *sqlstorage.Storage {
+	db := sqlstorage.New(config.DB.Dsn, config.DB.MaxIdleConnects, config.DB.MaxOpenConnects)
 
 	if *migrateDown > 0 {
 		logg.Info("migration down", logger.NewIntParam("steps", *migrateDown))
-		if err := db.MigrateDown(config.Db.Migrations, *migrateDown); err != nil {
+		if err := db.MigrateDown(config.DB.Migrations, *migrateDown); err != nil {
 			logg.Error("migration down: " + err.Error())
 			panic(err)
 		}
@@ -139,7 +149,7 @@ func createDbStorage(config *Config, migrateDown *int, fixAndForceMigration *int
 
 	if *fixAndForceMigration > 0 {
 		logg.Info("fix and force migration", logger.NewIntParam("version", *fixAndForceMigration))
-		if err := db.FixAndForce(config.Db.Migrations, *fixAndForceMigration); err != nil {
+		if err := db.FixAndForce(config.DB.Migrations, *fixAndForceMigration); err != nil {
 			logg.Error("fix and force migration: " + err.Error())
 			panic(err)
 		}
@@ -148,11 +158,15 @@ func createDbStorage(config *Config, migrateDown *int, fixAndForceMigration *int
 	}
 
 	logg.Info("executing migrations")
-	if err := db.Migrate(config.Db.Migrations); err != nil {
+	if err := db.Migrate(config.DB.Migrations); err != nil {
 		if xerrors.Is(err, migrate.ErrNoChange) {
 			logg.Info("migration: " + err.Error())
 		} else {
-			logg.Error("failed to execute db migrations: " + err.Error())
+			logg.Error(
+				"failed to execute db migrations: "+err.Error(),
+				logger.NewStringParam("dir", config.DB.Migrations),
+				logger.NewStringParam("dsn", config.DB.Dsn),
+			)
 			panic(err)
 		}
 	}

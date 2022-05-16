@@ -1,43 +1,29 @@
 package main
 
 import (
-	yaml "gopkg.in/yaml.v3"
-
+	"github.com/bojik/otus-golang/hw12_13_14_15_calendar/internal/config"
 	"github.com/spf13/viper"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const (
-	DbTypeMemory     = "memory"
-	DbTypePostgresql = "postgresql"
+	DBTypePostgresql = config.DBTypePostgresql
 )
 
 type Config struct {
-	Env        string     `mapstructure:"env"`
-	Logger     LoggerConf `mapstructure:"logger"`
-	Db         DbConf     `mapstructure:"db"`
-	HttpServer HttpServer `mapstructure:"http_server"`
-	ApiServer  ApiServer  `mapstructure:"api_server"`
+	Env        string            `mapstructure:"env"`
+	Logger     config.LoggerConf `mapstructure:"logger"`
+	DB         config.DBConf     `mapstructure:"db"`
+	HTTPServer HTTPServer        `mapstructure:"http_server"`
+	APIServer  APIServer         `mapstructure:"api_server"`
 }
 
-type LoggerConf struct {
-	Level string `mapstructure:"level"`
-	File  string `mapstructure:"file"`
-}
-
-type DbConf struct {
-	Type            string `mapstructure:"type"`
-	Dsn             string `mapstructure:"dsn"`
-	Migrations      string `mapstructure:"migrations"`
-	MaxIdleConnects int    `mapstructure:"max_idle_connects"`
-	MaxOpenConnects int    `mapstructure:"max_open_connects"`
-}
-
-type HttpServer struct {
+type HTTPServer struct {
 	Host string `mapstructure:"host"`
 	Port string `mapstructure:"port"`
 }
 
-type ApiServer struct {
+type APIServer struct {
 	Host string `mapstructure:"host"`
 	Port string `mapstructure:"port"`
 }
@@ -48,13 +34,8 @@ func NewConfig() *Config {
 }
 
 func (c *Config) initDefaults() error {
-	viper.SetDefault("logger.level", "DEBUG")
-	viper.SetDefault("logger.file", "")
-	viper.SetDefault("db.type", DbTypeMemory)
-	viper.SetDefault("db.dsn", "")
-	viper.SetDefault("db.migrations", "")
-	viper.SetDefault("db.max_idle_connects", "10")
-	viper.SetDefault("db.max_open_connects", "10")
+	config.InitLoggerConfig()
+	config.InitDBConfig()
 	viper.SetDefault("http_server.host", "0.0.0.0")
 	viper.SetDefault("http_server.port", "8080")
 	viper.SetDefault("api_server.host", "0.0.0.0")
@@ -62,6 +43,7 @@ func (c *Config) initDefaults() error {
 	if err := viper.Unmarshal(&c); err != nil {
 		return err
 	}
+	config.LoadFromEnv()
 	return nil
 }
 

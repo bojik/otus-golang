@@ -1,0 +1,1 @@
+alter table event add column sent bool default false;
