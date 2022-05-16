@@ -19,14 +19,14 @@ const (
 		values(:id, :title, :started_at, :description, :user_id, :finished_at, :notify_interval)`
 	SQLUpdateEvent = `update event set title = :title, started_at = :started_at, description = :description, 
                  user_id = :user_id, finished_at = :finished_at, notify_interval = :notify_interval where id = :id`
-	SQLSelectByID = `select id, title, started_at, description, user_id, finished_at, notify_interval from event
+	SQLSelectByID = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event
 				where id = :id`
 	SQLDeleteByID     = `delete from event where id = :id`
-	SQLSelectAll      = `select id, title, started_at, description, user_id, finished_at, notify_interval from event`
-	SQLSelectInterval = `select id, title, started_at, description, user_id, finished_at, notify_interval from event 
+	SQLSelectAll      = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event`
+	SQLSelectInterval = `select id, title, started_at, description, user_id, finished_at, notify_interval, sent from event 
 				where started_at between :start_date and :end_date order by started_at`
-	SQLSelectNotify = `select id, title, description, started_at, finished_at from event
-		where started_at - (notify_interval::text||' milliseconds')::interval <= current_timestamp and not sent`
+	SQLSelectNotify = `select id, title, description, started_at, finished_at, sent from event
+		where started_at - ((notify_interval / 1000000000)::text||' seconds')::interval <= current_timestamp and not sent`
 	SQLUpdateSent      = `update event set sent = true where id = :id`
 	SQLDeleteOldEvents = `delete from event where finished_at < current_timestamp - '1 year'::interval`
 )
@@ -169,6 +169,7 @@ func (s *Storage) FindByID(id string) (*storage.Event, error) {
 			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -213,6 +214,7 @@ func (s *Storage) SelectAll() ([]*storage.Event, error) {
 			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -243,6 +245,7 @@ func (s *Storage) SelectInterval(startTime, endTime time.Time) ([]*storage.Event
 			&evt.UserID,
 			&evt.FinishedAt,
 			&evt.NotifyInterval,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}
@@ -297,6 +300,7 @@ func (s *Storage) SelectToNotify() ([]*storage.Event, error) {
 			&evt.Description,
 			&evt.StartedAt,
 			&evt.FinishedAt,
+			&evt.Sent,
 		); err != nil {
 			return nil, err
 		}

@@ -8,9 +8,10 @@ services:
       - CALENDAR_DB_DSN=postgres://postgres:postgres@db:5432/postgres?sslmode=disable
       - CALENDAR_DB_MIGRATIONS=file:///etc/calendar/migrations/
       - CALENDAR_LOGGER_FILE=
-      - CALENDAR_LOGGER_LEVEL=INFO
+      - CALENDAR_LOGGER_LEVEL=DEBUG
       - CALENDAR_HTTP_SERVER_PORT=8085
       - CALENDAR_API_SERVER_PORT=8086
+      - WAIT_HOSTS=db:5432
     ports:
       - 8085:8085
       - 8086:8086
@@ -28,9 +29,11 @@ services:
       - CALENDAR_LOGGER_FILE=
       - CALENDAR_LOGGER_LEVEL=INFO
       - CALENDAR_SELECT_INTERVAL=5s
+      - WAIT_HOSTS=db:5432,rabbitmq:5672
     depends_on:
       - db
       - rabbitmq
+      - calendar
   sender:
     build:
       dockerfile: build/calendar-sender/Dockerfile
@@ -42,8 +45,10 @@ services:
       - CALENDAR_LOGGER_FILE=
       - CALENDAR_LOGGER_LEVEL=INFO
       - CALENDAR_THREADS=3
+      - WAIT_HOSTS=rabbitmq:5672
     depends_on:
       - rabbitmq
+      - scheduler
   db:
     image: postgres:latest
     environment:
@@ -51,8 +56,6 @@ services:
       - POSTGRES_PASSWORD=postgres
     ports:
       - '5432:5432'
-    volumes:
-      - ../../postgresql:/var/lib/postgresql/data
   rabbitmq:
     image: rabbitmq:management-alpine
     environment:
@@ -63,6 +66,3 @@ services:
     ports:
       - 5673:5672
       - 15673:15672
-    volumes:
-      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
-      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq

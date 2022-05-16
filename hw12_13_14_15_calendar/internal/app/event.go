@@ -15,6 +15,7 @@ type Event struct {
 	Description    string
 	UserID         int
 	NotifyInterval time.Duration
+	Sent           bool
 }
 
 func newFromStorageEvent(evt *storage.Event) *Event {
@@ -26,6 +27,7 @@ func newFromStorageEvent(evt *storage.Event) *Event {
 		Description:    evt.Description,
 		UserID:         evt.UserID,
 		NotifyInterval: evt.NotifyInterval,
+		Sent:           evt.Sent,
 	}
 }
 
@@ -49,6 +51,7 @@ func (e Event) ConvertToStorageEvent() *storage.Event {
 		Description:    e.Description,
 		UserID:         e.UserID,
 		NotifyInterval: e.NotifyInterval,
+		Sent:           e.Sent,
 	}
 }
 

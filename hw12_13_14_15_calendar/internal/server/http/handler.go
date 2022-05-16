@@ -29,6 +29,11 @@ const (
 	EventFieldNotifyInterval = "notify_interval"
 )
 
+const (
+	FormatDateTime = "2006-01-02 15:04:05"
+	FormatDate     = "2006-01-02"
+)
+
 // IndexHandler http handler for index page.
 type IndexHandler struct {
 	logg logger.Logger
@@ -59,19 +64,23 @@ type CreateEventHandler struct {
 func (c *CreateEventHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	e, err := fillNewEventFromRequest(request)
 	if err != nil {
+		c.l.Error(err.Error())
 		writeError(err, writer)
 		return
 	}
 	id, err := c.a.CreateEvent(request.Context(), *e)
 	if err != nil {
+		c.l.Error(err.Error())
 		writeError(err, writer)
 		return
 	}
 	event, err := c.a.FindByID(request.Context(), id)
 	if err != nil {
+		c.l.Error(err.Error())
 		writeError(err, writer)
 		return
 	}
+	c.l.Info("created event", logger.NewStringParam("ID", event.ID))
 	writeSuccess(writer, map[string]interface{}{"Event": event})
 }
 
@@ -298,7 +307,7 @@ func serveDateHTTP(writer http.ResponseWriter, request *http.Request, findFunc f
 		writeError(err, writer)
 		return
 	}
-	date, err := parseTime(data, "date")
+	date, err := parseDate(data, "date")
 	if err != nil {
 		writeError(err, writer)
 		return
@@ -317,7 +326,7 @@ func writeError(err error, writer http.ResponseWriter) {
 		Error:   err.Error(),
 	}
 	bytes, _ := json.Marshal(resp)
-	writer.Header().Set("content-type", "application-json")
+	writer.Header().Set("content-type", "application/json")
 	writer.Write(bytes)
 }
 
@@ -327,7 +336,7 @@ func writeSuccess(writer http.ResponseWriter, data map[string]interface{}) {
 		Data:    data,
 	}
 	bytes, _ := json.Marshal(resp)
-	writer.Header().Set("content-type", "application-json")
+	writer.Header().Set("content-type", "application/json")
 	_, _ = writer.Write(bytes)
 }
 
@@ -451,11 +460,19 @@ func parseRequest(r *http.Request) (url.Values, error) {
 }
 
 func parseTime(data url.Values, key string) (*time.Time, error) {
+	return parseTimeFormat(data, key, FormatDateTime)
+}
+
+func parseDate(data url.Values, key string) (*time.Time, error) {
+	return parseTimeFormat(data, key, FormatDate)
+}
+
+func parseTimeFormat(data url.Values, key, format string) (*time.Time, error) {
 	strs, ok := data[key]
 	if !ok {
 		return nil, fmt.Errorf("%w: %s", ErrFieldIsNotDefined, key)
 	}
-	t, err := time.Parse(time.RFC3339, strs[0])
+	t, err := time.Parse(format, strs[0])
 	if err != nil {
 		return nil, err
 	}

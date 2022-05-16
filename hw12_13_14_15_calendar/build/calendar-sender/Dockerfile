@@ -27,10 +27,13 @@ LABEL ORGANIZATION="OTUS Online Education"
 LABEL SERVICE="calendar"
 LABEL MAINTAINERS="student@otus.ru"
 
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.9.0/wait /wait
+RUN chmod +x /wait
+
 ENV BIN_FILE "/opt/calendar/calendar-sender-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
 ENV CONFIG_FILE /etc/calendar/config_sender.yaml
 COPY ./configs/config_sender.yaml ${CONFIG_FILE}
 
-CMD ${BIN_FILE} --config ${CONFIG_FILE}
+CMD /wait && ${BIN_FILE} --config ${CONFIG_FILE}

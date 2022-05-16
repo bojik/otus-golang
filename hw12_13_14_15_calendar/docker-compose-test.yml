@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  calendar:
+    container_name: "calendar_test"
+    ports: []
+  scheduler:
+    container_name: "scheduler_test"
+    ports: []
+  sender:
+    container_name: "sender_test"
+    ports: []
+  db:
+    container_name: "db_test"
+    ports: []
+  rabbitmq:
+    container_name: "rabbitmq_test"
+    ports: []
+  test-integration:
+    build:
+      dockerfile: build/test/Dockerfile
+      context: .
+    environment:
+      - CALENDAR_HTTP_URL=http://calendar:8085
+      - CALENDAR_SELECT_INTERVAL=1s
+      - CALENDAR_API_URL=calendar:8086
+      - WAIT_HOSTS=calendar:8085,calendar:8086
+    depends_on:
+      - calendar

@@ -31,6 +31,12 @@ build-img:
 run-img: build-img
 	docker run $(DOCKER_IMG)
 
+up:
+	docker-compose up -d
+
+down:
+	docker-compose down
+
 version-calendar: build-calendar
 	$(BIN) --version
 version-scheduler: build-scheduler
@@ -53,4 +59,8 @@ lint: install-lint-deps
 generate:
 	go generate ./...
 
+test-integration:
+	docker-compose -f docker-compose.yml -f docker-compose-test.yml up -d --scale test-integration=0; \
+	docker-compose -f docker-compose.yml -f docker-compose-test.yml up --exit-code-from test-integration test-integration; if [ $$? -eq 0 ] ; then result=0; else result=1; fi;\
+	docker-compose -f docker-compose.yml -f docker-compose-test.yml down; exit $$result
 .PHONY: build run build-img run-img version test lint

@@ -10,4 +10,5 @@ type Event struct {
 	UserID         int
 	FinishedAt     time.Time
 	NotifyInterval time.Duration
+	Sent           bool
 }
