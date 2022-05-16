@@ -21,7 +21,7 @@ services:
       context: .
     environment:
       - CALENDAR_HTTP_URL=http://calendar:8085
-      - CALENDAR_SELECT_INTERVAL=1s
+      - CALENDAR_SELECT_INTERVAL=5s
       - CALENDAR_API_URL=calendar:8086
       - WAIT_HOSTS=calendar:8085,calendar:8086
     depends_on:
